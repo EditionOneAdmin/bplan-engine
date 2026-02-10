@@ -61,7 +61,7 @@ export default function Hero() {
           className="relative"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bplan-engine/images/hero-cityscape.png" alt="Moderne Stadtquartier-Visualisierung" className="rounded-2xl shadow-2xl mb-6 w-full object-cover" />
+          <img src="/bplan-engine/images/hero-cityscape.jpg" alt="Moderne Stadtquartier-Visualisierung" className="rounded-2xl shadow-2xl mb-6 w-full object-cover" />
           <div className="bg-gray-bg rounded-2xl border border-gray-border p-8 shadow-xl">
             <div className="space-y-4">
               <div className="flex items-center gap-3">

@@ -7,7 +7,7 @@ export default function CTA() {
   return (
     <section className="py-20 md:py-32 px-6 bg-gray-bg relative overflow-hidden" id="kontakt">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/bplan-engine/images/cta-background.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none" />
+      <img src="/bplan-engine/images/cta-background.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none" />
       <div className="max-w-3xl mx-auto text-center relative z-10">
         <FadeIn>
           <h2 className="text-3xl md:text-5xl font-extrabold text-primary tracking-tight">
