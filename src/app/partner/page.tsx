@@ -370,7 +370,7 @@ export default function PartnerPage() {
         <Hero />
         <HowItWorks />
         <Benefits />
-        <Partners />
+        {/* Partners section removed */}
         <Checklist />
         <CTA />
       </main>
