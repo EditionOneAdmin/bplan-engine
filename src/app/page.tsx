@@ -653,9 +653,9 @@ function Nav() {
           <span className="text-lg font-bold text-primary">B-Plan Engine</span>
         </a>
         <nav className="hidden gap-6 text-sm font-medium text-slate-text/60 md:flex">
-          <a href="#pipeline" className="transition hover:text-primary">Pipeline</a>
-          <a href="#produkt" className="transition hover:text-primary">Produkt</a>
-          <a href="#technologie" className="transition hover:text-primary">Technologie</a>
+          <a href="/bplan-engine/produkt" className="transition hover:text-primary">Produkt</a>
+          <a href="/bplan-engine/anwendungsfaelle/portfolio-rollout" className="transition hover:text-primary">Use Cases</a>
+          <a href="/bplan-engine/technologie" className="transition hover:text-primary">Technologie</a>
           <a href="#faq" className="transition hover:text-primary">FAQ</a>
         </nav>
         <a
