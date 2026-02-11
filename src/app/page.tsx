@@ -134,16 +134,16 @@ function Hero() {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <a
-            href="#kontakt"
+            href="/bplan-engine/demo"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-8 py-4 text-base font-semibold text-white shadow-lg shadow-accent/20 transition hover:bg-accent-light hover:shadow-xl hover:shadow-accent/30"
           >
-            Demo anfragen <ArrowRight className="h-4 w-4" />
+            Interaktive Demo <ArrowRight className="h-4 w-4" />
           </a>
           <a
-            href="#produkt"
+            href="#kontakt"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-border px-8 py-4 text-base font-semibold text-primary transition hover:border-primary/30 hover:bg-gray-bg"
           >
-            Beispiel-Report ansehen
+            Demo anfragen
           </a>
         </motion.div>
 
@@ -592,10 +592,16 @@ function CTA() {
         </p>
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <a
-            href="mailto:hello@bplan-engine.de"
+            href="/bplan-engine/demo"
             className="inline-flex items-center gap-2 rounded-xl bg-accent px-8 py-4 text-base font-semibold text-white shadow-lg shadow-accent/20 transition hover:bg-accent-light hover:shadow-xl hover:shadow-accent/30"
           >
-            <Mail className="h-5 w-5" /> Demo anfragen
+            <ArrowRight className="h-5 w-5" /> Interaktive Demo starten
+          </a>
+          <a
+            href="mailto:hello@bplan-engine.de"
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-border px-8 py-4 text-base font-semibold text-primary transition hover:border-primary/30 hover:bg-gray-bg"
+          >
+            <Mail className="h-5 w-5" /> Kontakt aufnehmen
           </a>
         </div>
       </FadeIn>
@@ -730,10 +736,10 @@ function Nav() {
 
         <div className="flex items-center gap-3">
           <a
-            href="#kontakt"
+            href="/bplan-engine/demo"
             className="hidden rounded-lg bg-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-accent-light sm:inline-flex"
           >
-            Demo anfragen
+            Interaktive Demo
           </a>
 
           {/* Mobile Hamburger */}
@@ -763,7 +769,7 @@ function Nav() {
               ))}
               <a href="/bplan-engine/technologie" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>Technologie</a>
               <a href="#faq" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>FAQ</a>
-              <a href="#kontakt" className="mt-2 rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-accent-light transition" onClick={() => setMobileOpen(false)}>Demo anfragen</a>
+              <a href="/bplan-engine/demo" className="mt-2 rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-accent-light transition" onClick={() => setMobileOpen(false)}>Interaktive Demo</a>
             </nav>
           </motion.div>
         )}
