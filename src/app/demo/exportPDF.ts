@@ -61,16 +61,39 @@ export interface ExportData {
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
-    // Convert relative URL to absolute using current origin
     const absoluteUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
-    const resp = await fetch(absoluteUrl);
-    if (!resp.ok) return null;
-    const blob = await resp.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
+    // Use Image element + canvas to get base64 (more reliable than fetch for CORS)
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { resolve(null); return; }
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/jpeg", 0.9));
+        } catch(e) {
+          console.warn("canvas export failed, trying fetch:", url, e);
+          // Fallback to fetch
+          fetch(absoluteUrl)
+            .then(r => r.blob())
+            .then(blob => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(blob);
+            })
+            .catch(() => resolve(null));
+        }
+      };
+      img.onerror = () => {
+        console.warn("Image load failed:", absoluteUrl);
+        resolve(null);
+      };
+      img.src = absoluteUrl;
     });
   } catch(e) { console.warn("loadImageAsBase64 failed:", url, e); return null; }
 }
@@ -99,18 +122,24 @@ export async function exportProjectPlan(data: ExportData): Promise<void> {
   const { dateStr, full } = dateStamp();
 
   // Pre-load images
+  console.log("[PDF Export] Starting image preload...");
   const mapImage = await captureMap();
+  console.log("[PDF Export] Map capture:", mapImage ? `${mapImage.length} bytes` : "FAILED");
+  
   const renderingImages: Record<string, string> = {};
   const seenIds = new Set<string>();
   for (const unit of placedUnits) {
     if (seenIds.has(unit.buildingId)) continue;
     seenIds.add(unit.buildingId);
     const building = buildings.find(b => b.id === unit.buildingId);
+    console.log("[PDF Export] Building:", building?.id, "rendering:", building?.rendering);
     if (building?.rendering) {
       const img = await loadImageAsBase64(building.rendering);
+      console.log("[PDF Export] Loaded:", building.id, img ? `${img.length} bytes` : "FAILED");
       if (img) renderingImages[building.id] = img;
     }
   }
+  console.log("[PDF Export] Loaded renderings:", Object.keys(renderingImages).length, "of", seenIds.size);
 
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
