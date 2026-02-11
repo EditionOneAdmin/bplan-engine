@@ -10,6 +10,7 @@ import { DemoHeader } from "./DemoHeader";
 import type { Baufeld, PlacedUnit, Filters, Manufacturer, BuildingShape, RoofType, FacadeType } from "./types";
 import { BUILDINGS } from "./data";
 import { calculateMatch } from "./matchScore";
+import { exportProjectPlan } from "./exportPDF";
 
 const MapPanel = dynamic(() => import("./MapPanel"), { ssr: false });
 
@@ -183,6 +184,16 @@ export default function DemoApp() {
     return { totalBGF, totalUnits, parkingNeeded, grzUsage, gfzUsage, compliant };
   }, [placedUnits, activeBaufeld, baufelder]);
 
+  const handleExport = useCallback(() => {
+    exportProjectPlan({
+      baufelder,
+      placedUnits,
+      buildings: BUILDINGS,
+      filters,
+      metrics,
+    });
+  }, [baufelder, placedUnits, filters, metrics]);
+
   return (
     <div className="h-screen flex flex-col bg-[#0F172A] text-white overflow-hidden">
       <DemoHeader />
@@ -244,6 +255,7 @@ export default function DemoApp() {
         metrics={metrics}
         drawing={drawing}
         onToggleDraw={() => setDrawing((d) => !d)}
+        onExport={handleExport}
         matchScore={
           selectedBuilding && activeBaufeld
             ? calculateMatch(

@@ -52,7 +52,7 @@ function MiniScoreRing({ score }: { score: number }) {
   );
 }
 
-export function BottomBar({ metrics, drawing, onToggleDraw, matchScore }: { metrics: Metrics; drawing?: boolean; onToggleDraw?: () => void; matchScore?: number }) {
+export function BottomBar({ metrics, drawing, onToggleDraw, matchScore, onExport }: { metrics: Metrics; drawing?: boolean; onToggleDraw?: () => void; matchScore?: number; onExport?: () => void }) {
   return (
     <div className="bg-[#1E293B] border-t border-white/10 px-4 py-3 flex items-center gap-6 overflow-x-auto shrink-0">
       {onToggleDraw && (
@@ -103,6 +103,17 @@ export function BottomBar({ metrics, drawing, onToggleDraw, matchScore }: { metr
             <MiniScoreRing score={matchScore} />
             <span className="text-xs text-white/60 whitespace-nowrap">{matchScore}/10 Match</span>
           </div>
+        </>
+      )}
+      {onExport && (
+        <>
+          <div className="flex-1" />
+          <button
+            onClick={onExport}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/40"
+          >
+            📄 Export Projektplan
+          </button>
         </>
       )}
     </div>
