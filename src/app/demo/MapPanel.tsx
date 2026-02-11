@@ -18,6 +18,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Baufeld, PlacedUnit } from "./types";
 import { BUILDINGS } from "./data";
+import PlacedBuildings, { GhostPolygon } from "./PlacedBuildings";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -533,48 +534,7 @@ function BaufeldPolygon({
   );
 }
 
-/* ── Placed Unit Markers ──────────────────────────────────── */
-
-function PlacedUnitMarkers({ placedUnits, baufelder }: { placedUnits: PlacedUnit[]; baufelder: Baufeld[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    const markers: L.Marker[] = [];
-    const grouped: Record<string, PlacedUnit[]> = {};
-    placedUnits.forEach((u) => {
-      if (!grouped[u.baufeldId]) grouped[u.baufeldId] = [];
-      grouped[u.baufeldId].push(u);
-    });
-
-    Object.entries(grouped).forEach(([bfId, units]) => {
-      const bf = baufelder.find((b) => b.id === bfId);
-      if (!bf) return;
-      const centerLat = bf.coordinates.reduce((s, c) => s + c[0], 0) / bf.coordinates.length;
-      const centerLng = bf.coordinates.reduce((s, c) => s + c[1], 0) / bf.coordinates.length;
-
-      units.forEach((unit, i) => {
-        const building = BUILDINGS.find((b) => b.id === unit.buildingId);
-        if (!building) return;
-        const angle = (i / Math.max(units.length, 1)) * Math.PI * 2;
-        const r = 0.0003;
-        const lat = centerLat + Math.cos(angle) * r;
-        const lng = centerLng + Math.sin(angle) * r * 1.5;
-
-        const icon = L.divIcon({
-          className: "custom-unit-icon",
-          html: `<div style="background:${building.color};color:white;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:600;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3);font-family:Inter,sans-serif;">${building.name} ${unit.geschosse}G · ${unit.units}WE</div>`,
-          iconSize: [60, 20],
-          iconAnchor: [30, 10],
-        });
-        markers.push(L.marker([lat, lng], { icon }).addTo(map));
-      });
-    });
-
-    return () => markers.forEach((m) => m.remove());
-  }, [placedUnits, baufelder, map]);
-
-  return null;
-}
+/* ── (PlacedUnitMarkers removed — now in PlacedBuildings.tsx) ── */
 
 /* ── Draw Controls Toolbar ────────────────────────────────── */
 
@@ -622,6 +582,11 @@ interface Props {
   onAddBaufeld: (bf: Baufeld) => void;
   onDeleteBaufeld: (id: string) => void;
   activeBaufeld: Baufeld | null;
+  onMoveUnit?: (id: string, position: [number, number]) => void;
+  onRotateUnit?: (id: string, rotation: number) => void;
+  onViewUnit?: (id: string) => void;
+  onPlaceOnMap?: (position: [number, number], rotation: number) => void;
+  onCancelPlace?: () => void;
 }
 
 export default function MapPanel({
@@ -635,6 +600,11 @@ export default function MapPanel({
   activeBaufeld,
   drawing: drawingProp,
   onDrawingChange,
+  onMoveUnit,
+  onRotateUnit,
+  onViewUnit,
+  onPlaceOnMap,
+  onCancelPlace,
 }: Props & { drawing?: boolean; onDrawingChange?: (d: boolean) => void }) {
   const center: [number, number] = [52.52, 13.405];
 
@@ -772,7 +742,21 @@ export default function MapPanel({
             />
           );
         })}
-        <PlacedUnitMarkers placedUnits={placedUnits} baufelder={baufelder} />
+        {onMoveUnit && onRotateUnit && (
+          <PlacedBuildings
+            placedUnits={placedUnits}
+            onMoveUnit={onMoveUnit}
+            onRotateUnit={onRotateUnit}
+            onViewUnit={onViewUnit}
+          />
+        )}
+        {selectedFloorplan && onPlaceOnMap && onCancelPlace && (
+          <GhostPolygon
+            buildingId={selectedFloorplan}
+            onPlace={onPlaceOnMap}
+            onCancel={onCancelPlace}
+          />
+        )}
       </MapContainer>
 
       {/* Config modal */}

@@ -47,6 +47,48 @@ export default function DemoApp() {
     setPlaceMode(true);
   }, []);
 
+  const handleMoveUnit = useCallback((unitId: string, position: [number, number]) => {
+    setPlacedUnits(prev => prev.map(u => u.id === unitId ? { ...u, position } : u));
+  }, []);
+
+  const handleRotateUnit = useCallback((unitId: string, rotation: number) => {
+    setPlacedUnits(prev => prev.map(u => u.id === unitId ? { ...u, rotation } : u));
+  }, []);
+
+  const handlePlaceOnMap = useCallback((position: [number, number], rotation: number) => {
+    if (!selectedBuilding) return;
+    const building = BUILDINGS.find((b) => b.id === selectedBuilding);
+    if (!building) return;
+
+    // Find which baufeld contains this position (or use first/selected)
+    const baufeldId = selectedBaufeld || baufelder[0]?.id || "none";
+    const bgf = building.bgfPerGeschoss * configGeschosse;
+    const we = building.wePerGeschoss * configGeschosse;
+
+    setPlacedUnits((prev) => [
+      ...prev,
+      {
+        id: `${Date.now()}`,
+        baufeldId,
+        buildingId: selectedBuilding,
+        geschosse: configGeschosse,
+        roofType: configRoof,
+        facade: configFacade,
+        area: bgf,
+        units: we,
+        position,
+        rotation,
+      },
+    ]);
+    setPlaceMode(false);
+    setSelectedBuilding(null);
+  }, [selectedBuilding, selectedBaufeld, baufelder, configGeschosse, configRoof, configFacade]);
+
+  const handleCancelPlace = useCallback(() => {
+    setPlaceMode(false);
+    setSelectedBuilding(null);
+  }, []);
+
   const [filters, setFilters] = useState<Filters>({
     manufacturer: "all",
     shape: "all",
@@ -67,6 +109,9 @@ export default function DemoApp() {
         const bgf = building.bgfPerGeschoss * configGeschosse;
         const we = building.wePerGeschoss * configGeschosse;
 
+        const centerLat = bf.coordinates.reduce((s, c) => s + c[0], 0) / bf.coordinates.length;
+        const centerLng = bf.coordinates.reduce((s, c) => s + c[1], 0) / bf.coordinates.length;
+
         setPlacedUnits((prev) => [
           ...prev,
           {
@@ -78,6 +123,8 @@ export default function DemoApp() {
             facade: configFacade,
             area: bgf,
             units: we,
+            position: [centerLat, centerLng],
+            rotation: 0,
           },
         ]);
         setPlaceMode(false);
@@ -152,10 +199,15 @@ export default function DemoApp() {
             activeBaufeld={activeBaufeld}
             drawing={drawing}
             onDrawingChange={setDrawing}
+            onMoveUnit={handleMoveUnit}
+            onRotateUnit={handleRotateUnit}
+            onViewUnit={setSteckbriefUnit}
+            onPlaceOnMap={handlePlaceOnMap}
+            onCancelPlace={handleCancelPlace}
           />
           {placeMode && (
             <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#0D9488] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-[#0D9488]/30 animate-pulse">
-              Klicke auf ein Baufeld um das Gebäude zu platzieren
+              Klicke auf die Karte um das Gebäude zu platzieren · R = Drehen · ESC = Abbrechen
             </div>
           )}
         </div>

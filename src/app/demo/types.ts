@@ -49,6 +49,8 @@ export interface PlacedUnit {
   facade: FacadeType;
   area: number;
   units: number;
+  position: [number, number];    // [lat, lng]
+  rotation: number;              // degrees 0-360
 }
 
 export interface Filters {
