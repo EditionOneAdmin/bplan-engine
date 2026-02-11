@@ -268,6 +268,7 @@ interface Props {
   onSelect: (id: string | null) => void;
   placedUnits: PlacedUnit[];
   onRemoveUnit: (id: string) => void;
+  onViewUnit?: (id: string) => void;
   manufacturerFilter: Manufacturer | "all";
   onManufacturerFilter: (m: Manufacturer | "all") => void;
   shapeFilter: BuildingShape | "all";
@@ -289,6 +290,7 @@ export function BuildingCatalog({
   onSelect,
   placedUnits,
   onRemoveUnit,
+  onViewUnit,
   manufacturerFilter,
   onManufacturerFilter,
   shapeFilter,
@@ -478,7 +480,8 @@ export function BuildingCatalog({
               return (
                 <div
                   key={u.id}
-                  className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg bg-white/5"
+                  onClick={() => onViewUnit?.(u.id)}
+                  className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: b?.color || "#888" }} />

@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { BuildingCatalog } from "./BuildingCatalog";
+import { BuildingSteckbrief } from "./BuildingSteckbrief";
 import { FilterPanel } from "./FilterPanel";
 import { BottomBar } from "./BottomBar";
 import { DemoHeader } from "./DemoHeader";
@@ -39,6 +40,8 @@ export default function DemoApp() {
 
   // Place mode: user clicks "Auf Baufeld platzieren" then clicks a baufeld
   const [placeMode, setPlaceMode] = useState(false);
+  // Steckbrief modal for placed units
+  const [steckbriefUnit, setSteckbriefUnit] = useState<string | null>(null);
 
   const handlePlace = useCallback(() => {
     setPlaceMode(true);
@@ -164,6 +167,7 @@ export default function DemoApp() {
               onSelect={handleSelectBuilding}
               placedUnits={placedUnits}
               onRemoveUnit={handleRemoveUnit}
+              onViewUnit={setSteckbriefUnit}
               manufacturerFilter={filters.manufacturer}
               onManufacturerFilter={(m) => setFilters((f) => ({ ...f, manufacturer: m }))}
               shapeFilter={filters.shape}
@@ -199,6 +203,22 @@ export default function DemoApp() {
             : undefined
         }
       />
+      {steckbriefUnit && (() => {
+        const unit = placedUnits.find((u) => u.id === steckbriefUnit);
+        const building = unit ? BUILDINGS.find((b) => b.id === unit.buildingId) : null;
+        if (!unit || !building) return null;
+        return (
+          <BuildingSteckbrief
+            building={building}
+            geschosse={unit.geschosse}
+            roofType={unit.roofType}
+            facade={unit.facade}
+            energy={filters.energy}
+            efficiency={filters.efficiency}
+            onClose={() => setSteckbriefUnit(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
