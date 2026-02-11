@@ -17,7 +17,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Baufeld, PlacedUnit } from "./types";
-import { FLOORPLANS } from "./data";
+import { BUILDINGS } from "./data";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -553,8 +553,8 @@ function PlacedUnitMarkers({ placedUnits, baufelder }: { placedUnits: PlacedUnit
       const centerLng = bf.coordinates.reduce((s, c) => s + c[1], 0) / bf.coordinates.length;
 
       units.forEach((unit, i) => {
-        const fp = FLOORPLANS.find((f) => f.id === unit.floorplanId);
-        if (!fp) return;
+        const building = BUILDINGS.find((b) => b.id === unit.buildingId);
+        if (!building) return;
         const angle = (i / Math.max(units.length, 1)) * Math.PI * 2;
         const r = 0.0003;
         const lat = centerLat + Math.cos(angle) * r;
@@ -562,7 +562,7 @@ function PlacedUnitMarkers({ placedUnits, baufelder }: { placedUnits: PlacedUnit
 
         const icon = L.divIcon({
           className: "custom-unit-icon",
-          html: `<div style="background:#0D9488;color:white;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:600;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3);font-family:Inter,sans-serif;">${fp.name} ${fp.area}m²</div>`,
+          html: `<div style="background:${building.color};color:white;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:600;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3);font-family:Inter,sans-serif;">${building.name} ${unit.geschosse}G · ${unit.units}WE</div>`,
           iconSize: [60, 20],
           iconAnchor: [30, 10],
         });

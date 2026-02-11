@@ -2,12 +2,12 @@
 
 import { useState, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { FloorplanCatalog } from "./FloorplanCatalog";
+import { BuildingCatalog } from "./BuildingCatalog";
 import { FilterPanel } from "./FilterPanel";
 import { BottomBar } from "./BottomBar";
 import { DemoHeader } from "./DemoHeader";
-import type { Baufeld, PlacedUnit, Filters } from "./types";
-import { FLOORPLANS } from "./data";
+import type { Baufeld, PlacedUnit, Filters, Manufacturer, BuildingShape, RoofType, FacadeType } from "./types";
+import { BUILDINGS } from "./data";
 
 const MapPanel = dynamic(() => import("./MapPanel"), { ssr: false });
 
@@ -15,39 +15,74 @@ export default function DemoApp() {
   const [drawing, setDrawing] = useState(false);
   const [baufelder, setBaufelder] = useState<Baufeld[]>([]);
   const [selectedBaufeld, setSelectedBaufeld] = useState<string | null>(null);
-  const [selectedFloorplan, setSelectedFloorplan] = useState<string | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [placedUnits, setPlacedUnits] = useState<PlacedUnit[]>([]);
+
+  // Configurator state
+  const [configGeschosse, setConfigGeschosse] = useState(5);
+  const [configRoof, setConfigRoof] = useState<RoofType>("flat");
+  const [configFacade, setConfigFacade] = useState<FacadeType>("putz");
+
+  // When selecting a building, reset configurator to its defaults
+  const handleSelectBuilding = useCallback((id: string | null) => {
+    setSelectedBuilding(id);
+    if (id) {
+      const b = BUILDINGS.find((bb) => bb.id === id);
+      if (b) {
+        setConfigGeschosse(b.defaultGeschosse);
+        setConfigRoof(b.roofOptions[0]);
+        setConfigFacade(b.facadeOptions[0]);
+      }
+    }
+  }, []);
+
+  // Place mode: user clicks "Auf Baufeld platzieren" then clicks a baufeld
+  const [placeMode, setPlaceMode] = useState(false);
+
+  const handlePlace = useCallback(() => {
+    setPlaceMode(true);
+  }, []);
+
   const [filters, setFilters] = useState<Filters>({
-    minArea: 35,
-    maxArea: 140,
+    manufacturer: "all",
+    shape: "all",
+    minGeschosse: 1,
+    maxGeschosse: 8,
     strategy: "hold",
-    roofType: "flat",
     energy: "fernwaerme",
     efficiency: "geg",
   });
 
   const handleBaufeldClick = useCallback(
     (baufeldId: string) => {
-      if (selectedFloorplan) {
+      if (placeMode && selectedBuilding) {
         const bf = baufelder.find((b) => b.id === baufeldId);
-        const fp = FLOORPLANS.find((f) => f.id === selectedFloorplan);
-        if (!bf || !fp) return;
+        const building = BUILDINGS.find((b) => b.id === selectedBuilding);
+        if (!bf || !building) return;
+
+        const bgf = building.bgfPerGeschoss * configGeschosse;
+        const we = building.wePerGeschoss * configGeschosse;
+
         setPlacedUnits((prev) => [
           ...prev,
           {
             id: `${Date.now()}`,
             baufeldId,
-            floorplanId: selectedFloorplan,
-            area: fp.area,
-            rooms: fp.rooms,
+            buildingId: selectedBuilding,
+            geschosse: configGeschosse,
+            roofType: configRoof,
+            facade: configFacade,
+            area: bgf,
+            units: we,
           },
         ]);
-        setSelectedFloorplan(null);
+        setPlaceMode(false);
+        setSelectedBuilding(null);
       } else {
         setSelectedBaufeld((prev) => (prev === baufeldId ? null : baufeldId));
       }
     },
-    [selectedFloorplan, baufelder]
+    [placeMode, selectedBuilding, baufelder, configGeschosse, configRoof, configFacade]
   );
 
   const handleRemoveUnit = useCallback((unitId: string) => {
@@ -66,18 +101,9 @@ export default function DemoApp() {
 
   const activeBaufeld = baufelder.find((b) => b.id === selectedBaufeld) || null;
 
-  const filteredFloorplans = useMemo(
-    () =>
-      FLOORPLANS.map((fp) => ({
-        ...fp,
-        disabled: fp.area < filters.minArea || fp.area > filters.maxArea,
-      })),
-    [filters.minArea, filters.maxArea]
-  );
-
   const metrics = useMemo(() => {
     const totalBGF = placedUnits.reduce((s, u) => s + u.area, 0);
-    const totalUnits = placedUnits.length;
+    const totalUnits = placedUnits.reduce((s, u) => s + u.units, 0);
     const parkingNeeded = Math.ceil(totalUnits * 0.8);
 
     const bfForMetrics = activeBaufeld || baufelder[0];
@@ -93,7 +119,13 @@ export default function DemoApp() {
       : placedUnits;
     const bfBGF = bfUnits.reduce((s, u) => s + u.area, 0);
 
-    const grzUsage = maxGrundfläche > 0 ? (bfBGF * 0.4) / maxGrundfläche : 0;
+    // GRZ: use footprint (GF) of placed buildings
+    const bfGF = bfUnits.reduce((s, u) => {
+      const b = BUILDINGS.find((bb) => bb.id === u.buildingId);
+      return s + (b ? b.footprint.width * b.footprint.depth : 0);
+    }, 0);
+
+    const grzUsage = maxGrundfläche > 0 ? bfGF / maxGrundfläche : 0;
     const gfzUsage = maxGeschossflaeche > 0 ? bfBGF / maxGeschossflaeche : 0;
     const compliant = grzUsage <= 1 && gfzUsage <= 1;
 
@@ -108,7 +140,7 @@ export default function DemoApp() {
           <MapPanel
             baufelder={baufelder}
             selectedBaufeld={selectedBaufeld}
-            selectedFloorplan={selectedFloorplan}
+            selectedFloorplan={placeMode ? selectedBuilding : null}
             placedUnits={placedUnits}
             onBaufeldClick={handleBaufeldClick}
             onAddBaufeld={handleAddBaufeld}
@@ -117,15 +149,31 @@ export default function DemoApp() {
             drawing={drawing}
             onDrawingChange={setDrawing}
           />
+          {placeMode && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#0D9488] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-[#0D9488]/30 animate-pulse">
+              Klicke auf ein Baufeld um das Gebäude zu platzieren
+            </div>
+          )}
         </div>
         <div className="lg:w-[40%] flex flex-col min-h-0 border-l border-white/10">
           <div className="flex-1 min-h-0 overflow-y-auto bg-[#1E293B] p-4">
-            <FloorplanCatalog
-              floorplans={filteredFloorplans}
-              selectedId={selectedFloorplan}
-              onSelect={setSelectedFloorplan}
+            <BuildingCatalog
+              buildings={BUILDINGS}
+              selectedId={selectedBuilding}
+              onSelect={handleSelectBuilding}
               placedUnits={placedUnits}
               onRemoveUnit={handleRemoveUnit}
+              manufacturerFilter={filters.manufacturer}
+              onManufacturerFilter={(m) => setFilters((f) => ({ ...f, manufacturer: m }))}
+              shapeFilter={filters.shape}
+              onShapeFilter={(s) => setFilters((f) => ({ ...f, shape: s }))}
+              geschosse={configGeschosse}
+              setGeschosse={setConfigGeschosse}
+              roofType={configRoof}
+              setRoofType={setConfigRoof}
+              facade={configFacade}
+              setFacade={setConfigFacade}
+              onPlace={handlePlace}
             />
           </div>
           <div className="bg-[#1E293B] border-t border-white/10 p-4">
@@ -133,7 +181,7 @@ export default function DemoApp() {
           </div>
         </div>
       </div>
-      <BottomBar metrics={metrics} drawing={drawing} onToggleDraw={() => setDrawing(d => !d)} />
+      <BottomBar metrics={metrics} drawing={drawing} onToggleDraw={() => setDrawing((d) => !d)} />
     </div>
   );
 }

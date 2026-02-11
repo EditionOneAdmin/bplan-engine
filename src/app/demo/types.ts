@@ -13,28 +13,50 @@ export interface Baufeld {
   grundstuecksflaecheM2: number;
 }
 
-export interface FloorplanType {
+export type BuildingShape = "riegel" | "l-winkel" | "u-form" | "punkthaus" | "t-form" | "doppelhaus";
+export type Manufacturer = "gropius" | "okera" | "alho" | "goldbeck" | "max-boegl";
+export type RoofType = "flat" | "saddle" | "pult";
+export type FacadeType = "putz" | "klinker" | "holz" | "metall";
+export type EnergyRating = "A+" | "A" | "B" | "C";
+
+export interface BuildingModule {
   id: string;
   name: string;
-  label: string;
-  area: number;
-  rooms: number;
-  disabled?: boolean;
+  manufacturer: Manufacturer;
+  manufacturerLabel: string;
+  shape: BuildingShape;
+  shapeLabel: string;
+  footprint: { width: number; depth: number };
+  minGeschosse: number;
+  maxGeschosse: number;
+  defaultGeschosse: number;
+  wePerGeschoss: number;
+  bgfPerGeschoss: number;
+  roofOptions: RoofType[];
+  facadeOptions: FacadeType[];
+  energyRating: EnergyRating;
+  pricePerSqm: number;
+  tags: string[];
+  color: string;
 }
 
 export interface PlacedUnit {
   id: string;
   baufeldId: string;
-  floorplanId: string;
+  buildingId: string;
+  geschosse: number;
+  roofType: RoofType;
+  facade: FacadeType;
   area: number;
-  rooms: number;
+  units: number;
 }
 
 export interface Filters {
-  minArea: number;
-  maxArea: number;
+  manufacturer: Manufacturer | "all";
+  shape: BuildingShape | "all";
+  minGeschosse: number;
+  maxGeschosse: number;
   strategy: "hold" | "sell";
-  roofType: "flat" | "saddle" | "pult";
   energy: "fernwaerme" | "waermepumpe" | "gas";
   efficiency: "geg" | "kfw40" | "passivhaus";
 }
