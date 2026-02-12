@@ -126,6 +126,7 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
 interface MapCapture {
   image: string;
   bounds: { north: number; south: number; east: number; west: number };
+  aspectRatio: number; // width/height of the map container
 }
 
 async function captureMap(baufelder: Baufeld[]): Promise<MapCapture | null> {
@@ -160,11 +161,20 @@ async function captureMap(baufelder: Baufeld[]): Promise<MapCapture | null> {
     const html2canvas = (await import("html2canvas")).default;
     const mapEl = document.querySelector(".leaflet-container") as HTMLElement;
     if (mapEl) {
-      // Hide popups only (keep tiles visible, overlays don't matter — we redraw them)
+      // Hide overlays, popups, controls — we redraw baufelder/buildings with jsPDF
       const popups = mapEl.querySelectorAll(".leaflet-popup");
       const controls = mapEl.querySelectorAll(".leaflet-control-container");
+      const overlayPane = mapEl.querySelector(".leaflet-overlay-pane") as HTMLElement;
+      const markerPane = mapEl.querySelector(".leaflet-marker-pane") as HTMLElement;
+      const tooltipPane = mapEl.querySelector(".leaflet-tooltip-pane") as HTMLElement;
       popups.forEach(p => (p as HTMLElement).style.display = "none");
       controls.forEach(c => (c as HTMLElement).style.display = "none");
+      const savedOverlay = overlayPane?.style.display;
+      const savedMarker = markerPane?.style.display;
+      const savedTooltip = tooltipPane?.style.display;
+      if (overlayPane) overlayPane.style.display = "none";
+      if (markerPane) markerPane.style.display = "none";
+      if (tooltipPane) tooltipPane.style.display = "none";
 
       const canvas = await html2canvas(mapEl, {
         useCORS: true,
@@ -174,9 +184,12 @@ async function captureMap(baufelder: Baufeld[]): Promise<MapCapture | null> {
         imageTimeout: 5000,
       });
 
-      // Restore
+      // Restore everything
       popups.forEach(p => (p as HTMLElement).style.display = "");
       controls.forEach(c => (c as HTMLElement).style.display = "");
+      if (overlayPane) overlayPane.style.display = savedOverlay || "";
+      if (markerPane) markerPane.style.display = savedMarker || "";
+      if (tooltipPane) tooltipPane.style.display = savedTooltip || "";
 
       image = canvas.toDataURL("image/jpeg", 0.85);
     }
@@ -184,12 +197,22 @@ async function captureMap(baufelder: Baufeld[]): Promise<MapCapture | null> {
     // Screenshot failed — we'll use fallback grey background
   }
 
+  // Get aspect ratio from map container
+  let aspectRatio = 16 / 9; // fallback
+  try {
+    const mapEl = document.querySelector(".leaflet-container") as HTMLElement;
+    if (mapEl) {
+      const rect = mapEl.getBoundingClientRect();
+      if (rect.height > 0) aspectRatio = rect.width / rect.height;
+    }
+  } catch {}
+
   if (image) {
-    return { image, bounds };
+    return { image, bounds, aspectRatio };
   }
 
   // Return bounds-only capture (no image) so we can still draw polygons
-  return { image: "", bounds };
+  return { image: "", bounds, aspectRatio };
 }
 
 // ── Mietspiegel data (same as CostCalculator) ──
@@ -400,8 +423,16 @@ export async function exportProjectPlan(data: ExportData): Promise<void> {
     y += 8;
 
     const mapX = 20;
-    const mapW = W - 40;
-    const mapH = pageH - y - 30;
+    const maxMapW = W - 40;
+    const maxMapH = pageH - y - 30;
+    // Preserve map aspect ratio
+    const ar = mapCapture.aspectRatio || (16 / 9);
+    let mapW = maxMapW;
+    let mapH = mapW / ar;
+    if (mapH > maxMapH) {
+      mapH = maxMapH;
+      mapW = mapH * ar;
+    }
 
     // Add map screenshot or grey fallback background
     if (mapCapture.image) {
