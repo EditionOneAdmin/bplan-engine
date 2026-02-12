@@ -128,65 +128,68 @@ interface MapCapture {
   bounds: { north: number; south: number; east: number; west: number };
 }
 
-async function captureMap(): Promise<MapCapture | null> {
+async function captureMap(baufelder: Baufeld[]): Promise<MapCapture | null> {
+  // Step 1: Get map bounds (always needed, even without screenshot)
+  let bounds = { north: 0, south: 0, east: 0, west: 0 };
+  try {
+    const wMap = (window as any).__bplanMap;
+    if (wMap?.getBounds) {
+      const b = wMap.getBounds();
+      bounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
+    }
+  } catch {}
+
+  // Fallback bounds from baufeld coordinates
+  if (bounds.north === 0 && bounds.south === 0 && baufelder.length > 0) {
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    for (const bf of baufelder) {
+      for (const [lat, lng] of bf.coordinates) {
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+        minLng = Math.min(minLng, lng);
+        maxLng = Math.max(maxLng, lng);
+      }
+    }
+    const pad = 0.002;
+    bounds = { north: maxLat + pad, south: minLat - pad, east: maxLng + pad, west: minLng - pad };
+  }
+
+  // Step 2: Try html2canvas screenshot
+  let image: string | null = null;
   try {
     const html2canvas = (await import("html2canvas")).default;
     const mapEl = document.querySelector(".leaflet-container") as HTMLElement;
-    if (!mapEl) return null;
+    if (mapEl) {
+      // Hide popups only (keep tiles visible, overlays don't matter — we redraw them)
+      const popups = mapEl.querySelectorAll(".leaflet-popup");
+      const controls = mapEl.querySelectorAll(".leaflet-control-container");
+      popups.forEach(p => (p as HTMLElement).style.display = "none");
+      controls.forEach(c => (c as HTMLElement).style.display = "none");
 
-    // Get map bounds from Leaflet instance
-    const leafletMap = (mapEl as any)._leaflet_map || (window as any).L?.map?.(mapEl);
-    let bounds = { north: 0, south: 0, east: 0, west: 0 };
-    
-    // Try to get bounds from leaflet instance stored on the container
-    try {
-      // Leaflet stores the map instance — find it
-      const mapInstance = Object.values(mapEl).find((v: any) => v?._leaflet_id !== undefined && v?.getBounds) as any;
-      if (mapInstance?.getBounds) {
-        const b = mapInstance.getBounds();
-        bounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
-      }
-    } catch {}
-    
-    // Fallback: try window._leafletMap (we'll set this in MapPanel)
-    if (bounds.north === 0) {
-      try {
-        const wMap = (window as any).__bplanMap;
-        if (wMap?.getBounds) {
-          const b = wMap.getBounds();
-          bounds = { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() };
-        }
-      } catch {}
+      const canvas = await html2canvas(mapEl, {
+        useCORS: true,
+        allowTaint: false,
+        scale: 2,
+        logging: false,
+        imageTimeout: 5000,
+      });
+
+      // Restore
+      popups.forEach(p => (p as HTMLElement).style.display = "");
+      controls.forEach(c => (c as HTMLElement).style.display = "");
+
+      image = canvas.toDataURL("image/jpeg", 0.85);
     }
+  } catch {
+    // Screenshot failed — we'll use fallback grey background
+  }
 
-    // Hide popups and SVG overlays (we'll draw them with jsPDF instead)
-    const popups = mapEl.querySelectorAll(".leaflet-popup");
-    popups.forEach(p => (p as HTMLElement).style.display = "none");
-    const overlayPane = mapEl.querySelector(".leaflet-overlay-pane") as HTMLElement;
-    const markerPane = mapEl.querySelector(".leaflet-marker-pane") as HTMLElement;
-    const overlayDisplay = overlayPane?.style.display;
-    const markerDisplay = markerPane?.style.display;
-    if (overlayPane) overlayPane.style.display = "none";
-    if (markerPane) markerPane.style.display = "none";
+  if (image) {
+    return { image, bounds };
+  }
 
-    const canvas = await html2canvas(mapEl, {
-      useCORS: true,
-      allowTaint: true,
-      scale: 2,
-      logging: false,
-    });
-
-    // Restore
-    if (overlayPane) overlayPane.style.display = overlayDisplay || "";
-    if (markerPane) markerPane.style.display = markerDisplay || "";
-    popups.forEach(p => (p as HTMLElement).style.display = "");
-
-    try {
-      return { image: canvas.toDataURL("image/jpeg", 0.85), bounds };
-    } catch {
-      return null;
-    }
-  } catch { return null; }
+  // Return bounds-only capture (no image) so we can still draw polygons
+  return { image: "", bounds };
 }
 
 // ── Mietspiegel data (same as CostCalculator) ──
@@ -211,7 +214,7 @@ export async function exportProjectPlan(data: ExportData): Promise<void> {
   const { dateStr, full } = dateStamp();
 
   // Pre-load images
-  const mapCapture = config.lageplan ? await captureMap() : null;
+  const mapCapture = config.lageplan ? await captureMap(baufelder) : null;
   const renderingImages: Record<string, string> = {};
   if (config.gebaeudeSteckbriefe) {
     const seenIds = new Set<string>();
@@ -399,13 +402,28 @@ export async function exportProjectPlan(data: ExportData): Promise<void> {
     const mapX = 20;
     const mapW = W - 40;
     const mapH = pageH - y - 30;
-    try {
-      doc.addImage(mapCapture.image, "JPEG", mapX, y, mapW, mapH);
-    } catch { /* skip */ }
+
+    // Add map screenshot or grey fallback background
+    if (mapCapture.image) {
+      try {
+        doc.addImage(mapCapture.image, "JPEG", mapX, y, mapW, mapH);
+      } catch {
+        // Image failed — draw grey background
+        doc.setFillColor(220, 220, 220);
+        doc.rect(mapX, y, mapW, mapH, "F");
+      }
+    } else {
+      // No screenshot — grey background as fallback
+      doc.setFillColor(230, 230, 230);
+      doc.rect(mapX, y, mapW, mapH, "F");
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text("Kartenvorschau nicht verfügbar", mapX + mapW / 2, y + 10, { align: "center" });
+    }
 
     // Draw baufeld polygons and buildings directly on PDF
     const { north, south, east, west } = mapCapture.bounds;
-    if (north !== 0 || south !== 0) {
+    if (north !== south && east !== west) {
       const latRange = north - south;
       const lngRange = east - west;
 
@@ -413,7 +431,7 @@ export async function exportProjectPlan(data: ExportData): Promise<void> {
       const toX = (lng: number) => mapX + ((lng - west) / lngRange) * mapW;
       const toY = (lat: number) => y + ((north - lat) / latRange) * mapH;
 
-      // Draw baufeld polygons
+      // Draw baufeld polygons using individual line segments (most compatible)
       for (const bf of baufelder) {
         if (bf.coordinates.length < 3) continue;
         const color = bf.color || "#0D9488";
@@ -421,35 +439,36 @@ export async function exportProjectPlan(data: ExportData): Promise<void> {
         const g = parseInt(color.slice(3, 5), 16) || 148;
         const b = parseInt(color.slice(5, 7), 16) || 136;
 
+        const points = bf.coordinates.map(([lat, lng]) => [toX(lng), toY(lat)]);
+
+        // Semi-transparent fill using lines() with "DF" style
+        doc.setFillColor(r, g, b);
         doc.setDrawColor(r, g, b);
         doc.setLineWidth(0.8);
-        doc.setFillColor(r, g, b);
 
-        // Draw polygon using doc.lines (relative offsets, closed path)
-        const points = bf.coordinates.map(([lat, lng]) => [toX(lng), toY(lat)]);
-        if (points.length >= 3) {
-          // Build relative line segments for doc.lines
-          const segments: [number, number][] = [];
-          for (let i = 1; i < points.length; i++) {
-            segments.push([points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]]);
-          }
-          // Close polygon
-          segments.push([points[0][0] - points[points.length - 1][0], points[0][1] - points[points.length - 1][1]]);
-
-          // Filled polygon
-          doc.setFillColor(r, g, b);
-          doc.setDrawColor(r, g, b);
-          doc.setLineWidth(0.6);
-          (doc as any).lines(segments, points[0][0], points[0][1], [1, 1], "FD", true);
-
-          // Label at centroid
-          const cx = points.reduce((s, p) => s + p[0], 0) / points.length;
-          const cy = points.reduce((s, p) => s + p[1], 0) / points.length;
-          doc.setFontSize(7);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(255, 255, 255);
-          doc.text(bf.name, cx, cy, { align: "center" });
+        // Build relative segments for doc.lines
+        const segments: [number, number][] = [];
+        for (let i = 1; i < points.length; i++) {
+          segments.push([points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]]);
         }
+
+        try {
+          (doc as any).lines(segments, points[0][0], points[0][1], [1, 1], "FD", true);
+        } catch {
+          // Fallback: just draw outline with individual lines
+          for (let i = 0; i < points.length; i++) {
+            const j = (i + 1) % points.length;
+            doc.line(points[i][0], points[i][1], points[j][0], points[j][1]);
+          }
+        }
+
+        // Label at centroid
+        const cx = points.reduce((s, p) => s + p[0], 0) / points.length;
+        const cy = points.reduce((s, p) => s + p[1], 0) / points.length;
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text(bf.name, cx, cy, { align: "center" });
       }
 
       // Draw placed buildings as rectangles
