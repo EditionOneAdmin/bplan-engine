@@ -176,13 +176,25 @@ function ClickFeatureInfo({ enabled }: { enabled: boolean }) {
         const params = new URLSearchParams({
           SERVICE: "WMS", VERSION: "1.1.1", REQUEST: "GetFeatureInfo",
           LAYERS: layerName, QUERY_LAYERS: layerName,
-          INFO_FORMAT: "application/json",
+          INFO_FORMAT: "text/html",
+          STYLES: "",
           WIDTH: "256", HEIGHT: "256",
           SRS: "EPSG:4326",
           BBOX: wmsBbox,
           X: "128", Y: "128",
         });
         return `${baseUrl}?${params}`;
+      };
+
+      // Parse HTML table response into key-value pairs
+      const parseHtmlTable = (html: string): Record<string, string> => {
+        const result: Record<string, string> = {};
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const headers = Array.from(doc.querySelectorAll("th")).map(th => th.textContent?.trim() || "");
+        const cells = Array.from(doc.querySelectorAll("td")).map(td => td.textContent?.trim() || "");
+        headers.forEach((h, i) => { if (h && cells[i]) result[h] = cells[i]; });
+        return result;
       };
 
       // Fire all requests in parallel
@@ -195,7 +207,7 @@ function ClickFeatureInfo({ enabled }: { enabled: boolean }) {
       if (wohnlageActive) {
         promises.push(
           fetch(buildGetFeatureInfoUrl("https://gdi.berlin.de/services/wms/wohnlagenadr2024", "wohnlagenadr2024"))
-            .then(r => r.ok ? r.json() : null).catch(() => null)
+            .then(r => r.ok ? r.text() : null).catch(() => null)
         );
       } else {
         promises.push(Promise.resolve(null));
@@ -203,13 +215,13 @@ function ClickFeatureInfo({ enabled }: { enabled: boolean }) {
       if (borisActive) {
         promises.push(
           fetch(buildGetFeatureInfoUrl("https://gdi.berlin.de/services/wms/brw2025", "brw2025"))
-            .then(r => r.ok ? r.json() : null).catch(() => null)
+            .then(r => r.ok ? r.text() : null).catch(() => null)
         );
       } else {
         promises.push(Promise.resolve(null));
       }
 
-      const [flurData, wohnlageData, borisData] = await Promise.all(promises);
+      const [flurData, wohnlageHtml, borisHtml] = await Promise.all(promises);
 
       // --- Render Flurstück ---
       if (flurData) {
@@ -240,29 +252,16 @@ function ClickFeatureInfo({ enabled }: { enabled: boolean }) {
       }
 
       // --- Render Wohnlage (Mietspiegel) ---
-      if (wohnlageActive && wohnlageData) {
-        const features = wohnlageData?.features || [];
-        if (features.length > 0) {
-          const props = features[0].properties || {};
+      if (wohnlageActive && wohnlageHtml) {
+        const props = parseHtmlTable(wohnlageHtml);
+        const hasData = Object.keys(props).length > 0;
+        if (hasData) {
           content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
             <div style="font-weight:600;margin-bottom:4px;color:#A78BFA;">🏠 Wohnlage (Mietspiegel 2024)</div>`;
-          const wohnlageKeys: Record<string, string> = {
-            wohnlage: "Wohnlage", wohnlage_text: "Wohnlage", wl: "Wohnlage",
-            strasse: "Straße", plz: "PLZ", bez: "Bezirk", ort: "Ortsteil",
-          };
-          let found = false;
-          // Try known keys first, then show all
-          for (const [key, label] of Object.entries(wohnlageKeys)) {
-            if (props[key] != null && props[key] !== "") {
-              content += `<div><span style="color:#94a3b8;">${label}:</span> ${props[key]}</div>`;
-              found = true;
-            }
-          }
-          if (!found) {
-            // Show whatever properties are available
-            for (const [key, val] of Object.entries(props).slice(0, 10)) {
-              if (key === "geometry" || val == null || val === "") continue;
-              content += `<div><span style="color:#94a3b8;">${key}:</span> ${val}</div>`;
+          const showKeys = ["Wohnlage", "Bezirk", "Stadtteil", "Straßenname", "Hausnummer", "Postleitzahl", "LOR Planungsraum"];
+          for (const key of showKeys) {
+            if (props[key]) {
+              content += `<div><span style="color:#94a3b8;">${key}:</span> ${props[key]}</div>`;
             }
           }
           content += `</div>`;
@@ -273,35 +272,19 @@ function ClickFeatureInfo({ enabled }: { enabled: boolean }) {
       }
 
       // --- Render Bodenrichtwert (BORIS) ---
-      if (borisActive && borisData) {
-        const features = borisData?.features || [];
-        if (features.length > 0) {
-          const props = features[0].properties || {};
+      if (borisActive && borisHtml) {
+        const props = parseHtmlTable(borisHtml);
+        const hasData = Object.keys(props).length > 0;
+        if (hasData) {
           content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
             <div style="font-weight:600;margin-bottom:4px;color:#FBBF24;">💰 Bodenrichtwert (BORIS 2025)</div>`;
-          const borisKeys: Record<string, string> = {
-            brw: "Bodenrichtwert (€/m²)", richtwert: "Bodenrichtwert (€/m²)",
-            brw_euro_m2: "Bodenrichtwert (€/m²)", bodenrichtwert: "Bodenrichtwert (€/m²)",
-            stichtag: "Stichtag", stag: "Stichtag",
-            zone: "Zone", brwzone: "Zone", nutzung: "Nutzung", nutz: "Nutzung",
-            entw: "Entwicklungszustand", acza: "Ackerzahl",
-            bez: "Bezirk", ort: "Ortsteil",
-          };
-          let found = false;
-          for (const [key, label] of Object.entries(borisKeys)) {
-            if (props[key] != null && props[key] !== "") {
-              let val = props[key];
-              if ((key === "brw" || key === "richtwert" || key === "brw_euro_m2" || key === "bodenrichtwert") && typeof val === "number") {
-                val = `${val.toLocaleString("de-DE")} €/m²`;
-              }
-              content += `<div><span style="color:#94a3b8;">${label}:</span> ${val}</div>`;
-              found = true;
-            }
-          }
-          if (!found) {
-            for (const [key, val] of Object.entries(props).slice(0, 10)) {
-              if (key === "geometry" || val == null || val === "") continue;
-              content += `<div><span style="color:#94a3b8;">${key}:</span> ${val}</div>`;
+          const showKeys = ["Bodenrichtwert (in EURO/m²)", "Bezirk", "Art der Nutzung", "Stichtag", "Wertrelevante Geschossfläche", "Beitragsrechtlicher Zustand"];
+          for (const key of showKeys) {
+            if (props[key]) {
+              const val = key === "Bodenrichtwert (in EURO/m²)" 
+                ? `${Number(props[key]).toLocaleString("de-DE")} €/m²` 
+                : props[key];
+              content += `<div><span style="color:#94a3b8;">${key === "Bodenrichtwert (in EURO/m²)" ? "Bodenrichtwert" : key}:</span> ${val}</div>`;
             }
           }
           content += `</div>`;
