@@ -131,60 +131,189 @@ function AddressSearch() {
 
 function ClickFeatureInfo({ enabled }: { enabled: boolean }) {
   const map = useMap();
+  const [activeLayers, setActiveLayers] = useState<Set<string>>(new Set());
+
+  // Track which overlay layers are active
+  useEffect(() => {
+    const onAdd = (e: L.LayersControlEvent) => {
+      setActiveLayers((prev) => new Set(prev).add(e.name));
+    };
+    const onRemove = (e: L.LayersControlEvent) => {
+      setActiveLayers((prev) => {
+        const next = new Set(prev);
+        next.delete(e.name);
+        return next;
+      });
+    };
+    map.on("overlayadd", onAdd as any);
+    map.on("overlayremove", onRemove as any);
+    return () => {
+      map.off("overlayadd", onAdd as any);
+      map.off("overlayremove", onRemove as any);
+    };
+  }, [map]);
 
   useMapEvents({
     click: async (e) => {
       if (!enabled) return;
       const { lat, lng } = e.latlng;
+
+      let content = `<div style="font-family:Inter,sans-serif;font-size:12px;max-height:400px;overflow-y:auto;">
+        <div style="color:#94a3b8;margin-bottom:4px;">📍 ${lat.toFixed(6)}, ${lng.toFixed(6)}</div>`;
+
+      // --- Flurstück (WFS) ---
       const d = 0.0002;
       const bbox = `${lat - d},${lng - d},${lat + d},${lng + d},urn:ogc:def:crs:EPSG::4326`;
-      const params = new URLSearchParams({
-        SERVICE: "WFS",
-        VERSION: "2.0.0",
-        REQUEST: "GetFeature",
-        TYPENAMES: "flurstuecke",
-        COUNT: "1",
-        BBOX: bbox,
-        OUTPUTFORMAT: "application/json",
+      const flurParams = new URLSearchParams({
+        SERVICE: "WFS", VERSION: "2.0.0", REQUEST: "GetFeature",
+        TYPENAMES: "flurstuecke", COUNT: "1", BBOX: bbox, OUTPUTFORMAT: "application/json",
       });
-      const url = `https://gdi.berlin.de/services/wfs/alkis_flurstuecke?${params}`;
+      const flurUrl = `https://gdi.berlin.de/services/wfs/alkis_flurstuecke?${flurParams}`;
 
-      let content = `<div style="font-family:Inter,sans-serif;font-size:12px;">
-        <div style="color:#94a3b8;margin-bottom:4px;">📍 ${lat.toFixed(6)}, ${lng.toFixed(6)}</div>`;
-      try {
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          const features = data?.features || [];
-          if (features.length > 0) {
-            const props = features[0].properties || {};
-            content += `<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
-              <div style="font-weight:600;margin-bottom:4px;color:#0D9488;">Flurstück-Info</div>`;
-            const labelMap: Record<string, string> = {
-              fsko: "Kennzeichen", gmk: "Gemarkung", namgmk: "Gemarkung (Name)",
-              fln: "Flur", zae: "Zähler", nen: "Nenner", afl: "Fläche (m²)", namgem: "Gemeinde",
-            };
-            const keysToShow = Object.keys(labelMap).filter(k => props[k] != null && props[k] !== "");
-            if (keysToShow.length > 0) {
-              for (const key of keysToShow) {
-                const val = key === "afl" ? Number(props[key]).toLocaleString("de-DE") : props[key];
-                content += `<div><span style="color:#94a3b8;">${labelMap[key]}:</span> ${val}</div>`;
-              }
-            } else {
-              for (const key of Object.keys(props).slice(0, 8)) {
-                content += `<div><span style="color:#94a3b8;">${key}:</span> ${props[key]}</div>`;
-              }
-            }
-            content += `</div>`;
-          } else {
-            content += `<div style="color:#64748b;margin-top:4px;font-style:italic;">Kein Flurstück gefunden</div>`;
-          }
-        }
-      } catch {
-        content += `<div style="color:#64748b;margin-top:4px;font-style:italic;">Abfrage nicht verfügbar</div>`;
+      // --- WMS GetFeatureInfo helper ---
+      const buildGetFeatureInfoUrl = (baseUrl: string, layerName: string) => {
+        const delta = 0.0005;
+        const wmsBbox = `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`;
+        const params = new URLSearchParams({
+          SERVICE: "WMS", VERSION: "1.1.1", REQUEST: "GetFeatureInfo",
+          LAYERS: layerName, QUERY_LAYERS: layerName,
+          INFO_FORMAT: "application/json",
+          WIDTH: "256", HEIGHT: "256",
+          SRS: "EPSG:4326",
+          BBOX: wmsBbox,
+          X: "128", Y: "128",
+        });
+        return `${baseUrl}?${params}`;
+      };
+
+      // Fire all requests in parallel
+      const wohnlageActive = activeLayers.has("Wohnlagenkarte (Mietspiegel 2024)");
+      const borisActive = activeLayers.has("Bodenrichtwerte 2025 (BORIS)");
+
+      const promises: Promise<any>[] = [
+        fetch(flurUrl).then(r => r.ok ? r.json() : null).catch(() => null),
+      ];
+      if (wohnlageActive) {
+        promises.push(
+          fetch(buildGetFeatureInfoUrl("https://gdi.berlin.de/services/wms/wohnlagenadr2024", "wohnlagenadr2024"))
+            .then(r => r.ok ? r.json() : null).catch(() => null)
+        );
+      } else {
+        promises.push(Promise.resolve(null));
       }
+      if (borisActive) {
+        promises.push(
+          fetch(buildGetFeatureInfoUrl("https://gdi.berlin.de/services/wms/brw2025", "brw2025"))
+            .then(r => r.ok ? r.json() : null).catch(() => null)
+        );
+      } else {
+        promises.push(Promise.resolve(null));
+      }
+
+      const [flurData, wohnlageData, borisData] = await Promise.all(promises);
+
+      // --- Render Flurstück ---
+      if (flurData) {
+        const features = flurData?.features || [];
+        if (features.length > 0) {
+          const props = features[0].properties || {};
+          content += `<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
+            <div style="font-weight:600;margin-bottom:4px;color:#0D9488;">Flurstück-Info</div>`;
+          const labelMap: Record<string, string> = {
+            fsko: "Kennzeichen", gmk: "Gemarkung", namgmk: "Gemarkung (Name)",
+            fln: "Flur", zae: "Zähler", nen: "Nenner", afl: "Fläche (m²)", namgem: "Gemeinde",
+          };
+          const keysToShow = Object.keys(labelMap).filter(k => props[k] != null && props[k] !== "");
+          if (keysToShow.length > 0) {
+            for (const key of keysToShow) {
+              const val = key === "afl" ? Number(props[key]).toLocaleString("de-DE") : props[key];
+              content += `<div><span style="color:#94a3b8;">${labelMap[key]}:</span> ${val}</div>`;
+            }
+          } else {
+            for (const key of Object.keys(props).slice(0, 8)) {
+              content += `<div><span style="color:#94a3b8;">${key}:</span> ${props[key]}</div>`;
+            }
+          }
+          content += `</div>`;
+        } else {
+          content += `<div style="color:#64748b;margin-top:4px;font-style:italic;">Kein Flurstück gefunden</div>`;
+        }
+      }
+
+      // --- Render Wohnlage (Mietspiegel) ---
+      if (wohnlageActive && wohnlageData) {
+        const features = wohnlageData?.features || [];
+        if (features.length > 0) {
+          const props = features[0].properties || {};
+          content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
+            <div style="font-weight:600;margin-bottom:4px;color:#A78BFA;">🏠 Wohnlage (Mietspiegel 2024)</div>`;
+          const wohnlageKeys: Record<string, string> = {
+            wohnlage: "Wohnlage", wohnlage_text: "Wohnlage", wl: "Wohnlage",
+            strasse: "Straße", plz: "PLZ", bez: "Bezirk", ort: "Ortsteil",
+          };
+          let found = false;
+          // Try known keys first, then show all
+          for (const [key, label] of Object.entries(wohnlageKeys)) {
+            if (props[key] != null && props[key] !== "") {
+              content += `<div><span style="color:#94a3b8;">${label}:</span> ${props[key]}</div>`;
+              found = true;
+            }
+          }
+          if (!found) {
+            // Show whatever properties are available
+            for (const [key, val] of Object.entries(props).slice(0, 10)) {
+              if (key === "geometry" || val == null || val === "") continue;
+              content += `<div><span style="color:#94a3b8;">${key}:</span> ${val}</div>`;
+            }
+          }
+          content += `</div>`;
+        } else {
+          content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
+            <div style="color:#64748b;font-style:italic;">🏠 Keine Wohnlage-Info gefunden</div></div>`;
+        }
+      }
+
+      // --- Render Bodenrichtwert (BORIS) ---
+      if (borisActive && borisData) {
+        const features = borisData?.features || [];
+        if (features.length > 0) {
+          const props = features[0].properties || {};
+          content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
+            <div style="font-weight:600;margin-bottom:4px;color:#FBBF24;">💰 Bodenrichtwert (BORIS 2025)</div>`;
+          const borisKeys: Record<string, string> = {
+            brw: "Bodenrichtwert (€/m²)", richtwert: "Bodenrichtwert (€/m²)",
+            brw_euro_m2: "Bodenrichtwert (€/m²)", bodenrichtwert: "Bodenrichtwert (€/m²)",
+            stichtag: "Stichtag", stag: "Stichtag",
+            zone: "Zone", brwzone: "Zone", nutzung: "Nutzung", nutz: "Nutzung",
+            entw: "Entwicklungszustand", acza: "Ackerzahl",
+            bez: "Bezirk", ort: "Ortsteil",
+          };
+          let found = false;
+          for (const [key, label] of Object.entries(borisKeys)) {
+            if (props[key] != null && props[key] !== "") {
+              let val = props[key];
+              if ((key === "brw" || key === "richtwert" || key === "brw_euro_m2" || key === "bodenrichtwert") && typeof val === "number") {
+                val = `${val.toLocaleString("de-DE")} €/m²`;
+              }
+              content += `<div><span style="color:#94a3b8;">${label}:</span> ${val}</div>`;
+              found = true;
+            }
+          }
+          if (!found) {
+            for (const [key, val] of Object.entries(props).slice(0, 10)) {
+              if (key === "geometry" || val == null || val === "") continue;
+              content += `<div><span style="color:#94a3b8;">${key}:</span> ${val}</div>`;
+            }
+          }
+          content += `</div>`;
+        } else {
+          content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
+            <div style="color:#64748b;font-style:italic;">💰 Kein Bodenrichtwert gefunden</div></div>`;
+        }
+      }
+
       content += `</div>`;
-      L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+      L.popup({ maxWidth: 350, maxHeight: 450 }).setLatLng(e.latlng).setContent(content).openOn(map);
     },
   });
 
