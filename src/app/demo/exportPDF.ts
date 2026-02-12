@@ -120,40 +120,37 @@ async function captureMap(): Promise<string | null> {
     const html2canvas = (await import("html2canvas")).default;
     const mapEl = document.querySelector(".leaflet-container") as HTMLElement;
     if (!mapEl) return null;
-    const tileImages = mapEl.querySelectorAll("img.leaflet-tile");
-    const originalSrcs: Map<HTMLImageElement, string> = new Map();
-    const proxyPromises: Promise<void>[] = [];
-    tileImages.forEach((tile) => {
-      const img = tile as HTMLImageElement;
-      if (img.complete && img.naturalWidth > 0) {
-        proxyPromises.push((async () => {
-          try {
-            const resp = await fetch(img.src);
-            const blob = await resp.blob();
-            const dataUrl = await new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.readAsDataURL(blob);
-            });
-            originalSrcs.set(img, img.src);
-            img.src = dataUrl;
-          } catch {}
-        })());
-      }
+
+    // Close any open popups before capturing
+    const popups = mapEl.querySelectorAll(".leaflet-popup");
+    popups.forEach(p => (p as HTMLElement).style.display = "none");
+
+    // Capture with allowTaint to ensure SVG overlays (baufelder, buildings) are included
+    const canvas = await html2canvas(mapEl, {
+      useCORS: true,
+      allowTaint: true,
+      scale: 2,
+      logging: false,
+      foreignObjectRendering: false,
     });
-    await Promise.allSettled(proxyPromises);
-    const canvas = await html2canvas(mapEl, { useCORS: true, allowTaint: false, scale: 2, logging: false });
-    originalSrcs.forEach((src, img) => { img.src = src; });
-    return canvas.toDataURL("image/jpeg", 0.85);
-  } catch {
+
+    // Restore popups
+    popups.forEach(p => (p as HTMLElement).style.display = "");
+
+    // Try toDataURL — may fail with tainted canvas on some browsers
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const mapEl = document.querySelector(".leaflet-container") as HTMLElement;
-      if (!mapEl) return null;
-      const canvas = await html2canvas(mapEl, { useCORS: false, allowTaint: true, scale: 2, logging: false });
       return canvas.toDataURL("image/jpeg", 0.85);
-    } catch { return null; }
-  }
+    } catch {
+      // If tainted, retry without allowTaint (tiles may be missing but overlays work)
+      const canvas2 = await html2canvas(mapEl, {
+        useCORS: true,
+        allowTaint: false,
+        scale: 2,
+        logging: false,
+      });
+      return canvas2.toDataURL("image/jpeg", 0.85);
+    }
+  } catch { return null; }
 }
 
 // ── Mietspiegel data (same as CostCalculator) ──
