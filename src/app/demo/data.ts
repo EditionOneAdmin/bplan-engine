@@ -297,6 +297,7 @@ export const BUILDINGS: BuildingModule[] = [
     pricePerSqm: 1850,
     tags: ["holzmodulbau", "kfw40", "seriell", "barrierefrei"],
     color: "#06B6D4",
+    rendering: "/bplan-engine/renderings/optimized/nokera-riegel-40.jpg",
   },
   {
     id: "nokera-punkt-15",
@@ -317,6 +318,7 @@ export const BUILDINGS: BuildingModule[] = [
     pricePerSqm: 2050,
     tags: ["holzmodulbau", "kfw40", "nachverdichtung", "aufzug"],
     color: "#06B6D4",
+    rendering: "/bplan-engine/renderings/optimized/nokera-punkt-15.jpg",
   },
   {
     id: "nokera-riegel-54",
@@ -337,5 +339,6 @@ export const BUILDINGS: BuildingModule[] = [
     pricePerSqm: 1720,
     tags: ["holzmodulbau", "kfw40", "seriell", "großserie"],
     color: "#06B6D4",
+    rendering: "/bplan-engine/renderings/optimized/nokera-riegel-54.jpg",
   },
 ];
