@@ -4,11 +4,10 @@ export const BAUFELDER: Baufeld[] = [];
 
 export const MANUFACTURERS: Record<Manufacturer, { label: string; color: string; accent: string }> = {
   "gropius": { label: "Gropius", color: "#3B82F6", accent: "#60A5FA" },
-  "okera": { label: "Okera", color: "#22C55E", accent: "#4ADE80" },
+  "nokera": { label: "Nokera", color: "#06B6D4", accent: "#22D3EE" },
   "alho": { label: "ALHO", color: "#F59E0B", accent: "#FBBF24" },
   "goldbeck": { label: "Goldbeck", color: "#EF4444", accent: "#F87171" },
   "max-boegl": { label: "Max Bögl", color: "#8B5CF6", accent: "#A78BFA" },
-  "nokera": { label: "Nokera", color: "#06B6D4", accent: "#22D3EE" },
 };
 
 export const SHAPE_CONFIG: Record<BuildingShape, { label: string; icon: string }> = {
@@ -85,12 +84,12 @@ export const BUILDINGS: BuildingModule[] = [
     color: "#3B82F6",
     rendering: "/bplan-engine/renderings/optimized/gropius-u-36.jpg",
   },
-  // ── Okera (2) ──
+  // ── Nokera (2) ──
   {
-    id: "okera-riegel-30",
+    id: "nokera-riegel-30",
     name: "Riegel R-30",
-    manufacturer: "okera",
-    manufacturerLabel: "Okera",
+    manufacturer: "nokera",
+    manufacturerLabel: "Nokera",
     shape: "riegel",
     shapeLabel: "Riegel",
     footprint: { width: 12, depth: 30 },
@@ -104,14 +103,14 @@ export const BUILDINGS: BuildingModule[] = [
     energyRating: "A+",
     pricePerSqm: 2050,
     tags: ["holzbau", "kfw40", "passivhaus"],
-    color: "#22C55E",
-    rendering: "/bplan-engine/renderings/optimized/okera-riegel-30.jpg",
+    color: "#06B6D4",
+    rendering: "/bplan-engine/renderings/optimized/nokera-riegel-30.jpg",
   },
   {
-    id: "okera-l-24",
+    id: "nokera-l-24",
     name: "L-Winkel L-24",
-    manufacturer: "okera",
-    manufacturerLabel: "Okera",
+    manufacturer: "nokera",
+    manufacturerLabel: "Nokera",
     shape: "l-winkel",
     shapeLabel: "L-Winkel",
     footprint: { width: 24, depth: 24 },
@@ -125,8 +124,8 @@ export const BUILDINGS: BuildingModule[] = [
     energyRating: "A+",
     pricePerSqm: 2200,
     tags: ["holzbau", "passivhaus", "barrierefrei"],
-    color: "#22C55E",
-    rendering: "/bplan-engine/renderings/optimized/okera-l-24.jpg",
+    color: "#06B6D4",
+    rendering: "/bplan-engine/renderings/optimized/nokera-l-24.jpg",
   },
   // ── ALHO (2) ──
   {
