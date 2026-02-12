@@ -125,30 +125,88 @@ async function captureMap(): Promise<string | null> {
     const popups = mapEl.querySelectorAll(".leaflet-popup");
     popups.forEach(p => (p as HTMLElement).style.display = "none");
 
-    // Capture with allowTaint to ensure SVG overlays (baufelder, buildings) are included
+    // Convert SVG overlays to inline canvas images so html2canvas can capture them
+    // Leaflet renders polygons/markers in SVG elements inside .leaflet-overlay-pane
+    const svgElements = mapEl.querySelectorAll(".leaflet-overlay-pane svg, .leaflet-marker-pane *");
+    const inlinedCanvases: { canvas: HTMLCanvasElement; parent: Element; svg: Element }[] = [];
+
+    for (const svg of Array.from(mapEl.querySelectorAll(".leaflet-overlay-pane svg"))) {
+      try {
+        const svgEl = svg as SVGSVGElement;
+        const bbox = svgEl.getBoundingClientRect();
+        if (bbox.width === 0 || bbox.height === 0) continue;
+
+        // Serialize SVG to string
+        const serializer = new XMLSerializer();
+        const svgStr = serializer.serializeToString(svgEl);
+        const svgBlob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(svgBlob);
+
+        // Draw SVG onto a canvas element
+        const img = new Image();
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = url;
+        });
+
+        const c = document.createElement("canvas");
+        c.width = bbox.width * 2;
+        c.height = bbox.height * 2;
+        c.style.position = "absolute";
+        c.style.left = `${svgEl.style.left || "0px"}`;
+        c.style.top = `${svgEl.style.top || "0px"}`;
+        c.style.width = `${bbox.width}px`;
+        c.style.height = `${bbox.height}px`;
+        c.style.pointerEvents = "none";
+        const ctx = c.getContext("2d");
+        if (ctx) {
+          ctx.scale(2, 2);
+          ctx.drawImage(img, 0, 0, bbox.width, bbox.height);
+        }
+        URL.revokeObjectURL(url);
+
+        // Insert canvas next to SVG and hide SVG
+        const parent = svgEl.parentElement;
+        if (parent) {
+          parent.appendChild(c);
+          (svgEl as any)._origDisplay = svgEl.style.display;
+          svgEl.style.display = "none";
+          inlinedCanvases.push({ canvas: c, parent, svg: svgEl });
+        }
+      } catch { /* skip individual SVG errors */ }
+    }
+
+    // Now capture with html2canvas — canvas elements are captured natively
     const canvas = await html2canvas(mapEl, {
       useCORS: true,
       allowTaint: true,
       scale: 2,
       logging: false,
-      foreignObjectRendering: false,
     });
+
+    // Restore: remove temp canvases, show SVGs again
+    for (const { canvas: c, parent, svg } of inlinedCanvases) {
+      parent.removeChild(c);
+      (svg as HTMLElement).style.display = (svg as any)._origDisplay || "";
+    }
 
     // Restore popups
     popups.forEach(p => (p as HTMLElement).style.display = "");
 
-    // Try toDataURL — may fail with tainted canvas on some browsers
     try {
       return canvas.toDataURL("image/jpeg", 0.85);
     } catch {
-      // If tainted, retry without allowTaint (tiles may be missing but overlays work)
+      // Tainted canvas fallback
+      popups.forEach(p => (p as HTMLElement).style.display = "none");
       const canvas2 = await html2canvas(mapEl, {
-        useCORS: true,
-        allowTaint: false,
+        useCORS: false,
+        allowTaint: true,
         scale: 2,
         logging: false,
       });
-      return canvas2.toDataURL("image/jpeg", 0.85);
+      popups.forEach(p => (p as HTMLElement).style.display = "");
+      try { return canvas2.toDataURL("image/jpeg", 0.85); } catch { return null; }
     }
   } catch { return null; }
 }
