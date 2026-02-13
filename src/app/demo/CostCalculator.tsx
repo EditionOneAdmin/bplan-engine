@@ -276,6 +276,85 @@ function CashflowChart({
   );
 }
 
+/* ── Dual Range Slider ────────────────────────────────────── */
+
+function DualRangeSlider({
+  min,
+  max,
+  valueLow,
+  valueHigh,
+  onChangeLow,
+  onChangeHigh,
+  color,
+}: {
+  min: number;
+  max: number;
+  valueLow: number;
+  valueHigh: number;
+  onChangeLow: (v: number) => void;
+  onChangeHigh: (v: number) => void;
+  color: string;
+}) {
+  const lowPct = ((valueLow - min) / (max - min)) * 100;
+  const highPct = ((valueHigh - min) / (max - min)) * 100;
+
+  return (
+    <div className="relative h-6">
+      {/* Track background */}
+      <div className="absolute top-2.5 left-0 right-0 h-1.5 rounded-full bg-white/10" />
+      {/* Filled track */}
+      <div
+        className="absolute top-2.5 h-1.5 rounded-full"
+        style={{
+          left: `${lowPct}%`,
+          width: `${highPct - lowPct}%`,
+          backgroundColor: color,
+        }}
+      />
+      {/* Low thumb label */}
+      <div
+        className="absolute top-[-2px] text-[9px] text-white/60 font-medium pointer-events-none"
+        style={{ left: `${lowPct}%`, transform: "translateX(-50%)" }}
+      >
+        {valueLow}
+      </div>
+      {/* High thumb label */}
+      <div
+        className="absolute top-[-2px] text-[9px] text-white/60 font-medium pointer-events-none"
+        style={{ left: `${highPct}%`, transform: "translateX(-50%)" }}
+      >
+        {valueHigh}
+      </div>
+      {/* Low range input */}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={valueLow}
+        onChange={(e) => {
+          const v = parseInt(e.target.value);
+          if (v <= valueHigh) onChangeLow(v);
+        }}
+        className="absolute top-0 left-0 w-full h-6 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:relative [&::-moz-range-thumb]:z-20"
+        style={{ ["--tw-border-opacity" as string]: 1, borderColor: color } as React.CSSProperties}
+      />
+      {/* High range input */}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={valueHigh}
+        onChange={(e) => {
+          const v = parseInt(e.target.value);
+          if (v >= valueLow) onChangeHigh(v);
+        }}
+        className="absolute top-0 left-0 w-full h-6 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:relative [&::-moz-range-thumb]:z-20"
+        style={{ ["--tw-border-opacity" as string]: 1, borderColor: color } as React.CSSProperties}
+      />
+    </div>
+  );
+}
+
 /* ── Main Component ───────────────────────────────────────── */
 
 interface Props {
@@ -762,32 +841,103 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
           ))}
         </div>
 
-        {/* Sliders */}
-        <div className="space-y-3">
-          {[
-            { label: "Baustart", value: baustart, onChange: handleBaustartChange },
-            { label: "Bauende", value: bauende, onChange: handleBauendeChange },
-            { label: "Vertriebsstart", value: vertriebsstart, onChange: setVertriebsstart },
-            { label: "Vertriebsende", value: vertriebsende, onChange: setVertriebsende },
-          ].map(({ label, value, onChange }) => (
-            <div key={label}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-white/50">{label}</span>
-                <span className="text-[10px] text-white/70 font-medium">{value} Mo.</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={48}
-                value={value}
-                onChange={(e) => onChange(parseInt(e.target.value))}
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #0D9488 ${(value / 48) * 100}%, rgba(255,255,255,0.1) ${(value / 48) * 100}%)`,
-                }}
-              />
+        {/* Dual Range Sliders */}
+        <div className="space-y-4">
+          {/* Bau Range Slider */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-white/50 font-semibold">🏗 Bau</span>
+              <span className="text-[10px] text-white/70">{baustart} – {bauende} Mo.</span>
             </div>
-          ))}
+            <DualRangeSlider
+              min={0} max={48}
+              valueLow={baustart} valueHigh={bauende}
+              onChangeLow={handleBaustartChange} onChangeHigh={handleBauendeChange}
+              color="#0D9488"
+            />
+          </div>
+
+          {/* Vertrieb Range Slider */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-white/50 font-semibold">📢 Vertrieb</span>
+              <span className="text-[10px] text-white/70">{vertriebsstart} – {vertriebsende} Mo.</span>
+            </div>
+            <DualRangeSlider
+              min={0} max={48}
+              valueLow={vertriebsstart} valueHigh={vertriebsende}
+              onChangeLow={setVertriebsstart} onChangeHigh={setVertriebsende}
+              color="#22C55E"
+            />
+          </div>
+        </div>
+
+        {/* Mini Timeline (Gantt) */}
+        <div className="mt-4 bg-white/5 rounded-lg p-3">
+          <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Timeline</div>
+          <div className="space-y-1.5">
+            {/* Bau bar */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-white/50 w-12 shrink-0">Bau</span>
+              <div className="flex-1 h-5 relative bg-white/5 rounded">
+                <div
+                  className="absolute top-0 h-full rounded"
+                  style={{
+                    left: `${(baustart / 48) * 100}%`,
+                    width: `${((bauende - baustart) / 48) * 100}%`,
+                    backgroundColor: "#0D9488",
+                    opacity: 0.8,
+                  }}
+                />
+              </div>
+            </div>
+            {/* Vertrieb bar */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-white/50 w-12 shrink-0">Vertrieb</span>
+              <div className="flex-1 h-5 relative bg-white/5 rounded">
+                <div
+                  className="absolute top-0 h-full rounded"
+                  style={{
+                    left: `${(vertriebsstart / 48) * 100}%`,
+                    width: `${((vertriebsende - vertriebsstart) / 48) * 100}%`,
+                    backgroundColor: "#22C55E",
+                    opacity: 0.8,
+                  }}
+                />
+              </div>
+            </div>
+            {/* Overlap bar */}
+            {(() => {
+              const oStart = Math.max(baustart, vertriebsstart);
+              const oEnd = Math.min(bauende, vertriebsende);
+              if (oEnd <= oStart) return null;
+              return (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-white/30 w-12 shrink-0">Overlap</span>
+                  <div className="flex-1 h-5 relative bg-white/5 rounded">
+                    <div
+                      className="absolute top-0 h-full rounded"
+                      style={{
+                        left: `${(oStart / 48) * 100}%`,
+                        width: `${((oEnd - oStart) / 48) * 100}%`,
+                        background: "repeating-linear-gradient(45deg, #0D9488, #0D9488 4px, #22C55E 4px, #22C55E 8px)",
+                        opacity: 0.6,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+          {/* X-axis labels */}
+          <div className="flex items-center gap-2 mt-1">
+            <div className="w-12 shrink-0" />
+            <div className="flex-1 flex justify-between">
+              {[0, 6, 12, 18, 24, 30, 36, 42, 48].map(m => (
+                <span key={m} className="text-[8px] text-white/30">{m}</span>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Ausgaben-Kurve */}
