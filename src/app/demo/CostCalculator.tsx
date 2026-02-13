@@ -428,6 +428,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
     // Total BGF
     const totalBGF = placedUnits.reduce((s, u) => s + u.area, 0);
+    const totalWohnflaeche = Math.round(totalBGF * 0.75);
 
     // KG 100: Grundstück
     const kg100 = baufelder.reduce((sum, bf) => {
@@ -483,11 +484,11 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
     })();
 
     const mieteProM2 = mietOverride ?? defaultMiete;
-    const jahresmiete = mieteProM2 * totalBGF * 12;
+    const jahresmiete = mieteProM2 * totalWohnflaeche * 12;
 
-    const defaultVerkauf = totalBGF > 0 ? (kg300 * 1.35) / totalBGF : 4500;
+    const defaultVerkauf = totalWohnflaeche > 0 ? (kg300 * 1.35) / totalWohnflaeche : 4500;
     const verkaufProM2 = verkaufOverride ?? defaultVerkauf;
-    const verkaufserloes = verkaufProM2 * totalBGF;
+    const verkaufserloes = verkaufProM2 * totalWohnflaeche;
 
     // Gesamtlaufzeit
     const gesamtlaufzeitMonate = Math.max(bauende, vertriebsende);
@@ -607,7 +608,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
     return {
       kg100, kg200, kg300, kg500, kg700, kg700BasePct,
-      sumKG, gesamtkosten, totalBGF, bauzeit,
+      sumKG, gesamtkosten, totalBGF, totalWohnflaeche, bauzeit,
       fkVolumen, ekBedarf, bauzinsen,
       bereitstellungszinsen: bereitstellungszinsenVal,
       finKostenBau, annuitaetJahr, monatlicheRate,
@@ -707,7 +708,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         </CostRow>
 
         <CostRow label="KG 300+400 · Gebäude + Technik" value={calc.kg300} enabled={kg300On} onToggle={setKg300On}>
-          <div className="text-[10px] text-white/30">{placedUnits.length} Gebäude · {calc.totalBGF.toLocaleString("de-DE")} m² BGF</div>
+          <div className="text-[10px] text-white/30">{placedUnits.length} Gebäude · {calc.totalBGF.toLocaleString("de-DE")} m² BGF · {calc.totalWohnflaeche.toLocaleString("de-DE")} m² WF (75%)</div>
         </CostRow>
 
         <CostRow label="KG 500 · Außenanlagen" value={calc.kg500} enabled={kg500On} onToggle={setKg500On}>
@@ -993,11 +994,11 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         {strategy === "hold" ? (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-white/70">Miete €/m²/Monat</span>
+              <span className="text-xs text-white/70">Miete €/m² WF/Monat</span>
               <NumInput
                 value={mietOverride ?? calc.defaultMiete}
                 onChange={(v) => setMietOverride(v)}
-                suffix="€/m²"
+                suffix="€/m² WF"
                 step={0.5}
               />
             </div>

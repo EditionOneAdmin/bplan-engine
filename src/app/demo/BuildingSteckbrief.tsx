@@ -207,6 +207,8 @@ export function BuildingSteckbrief({
   const mfr = MANUFACTURERS[building.manufacturer];
   const totalWE = building.wePerGeschoss * geschosse;
   const bgf = building.bgfPerGeschoss * geschosse;
+  const wohnflaeche = Math.round(bgf * 0.75);
+  const wohnflaechenEffizienz = 75.0; // dummy for now
   const bri = Math.round(bgf * 3.25);
   const gf = building.footprint.width * building.footprint.depth;
   const stellplaetze = Math.ceil(totalWE * 0.8);
@@ -292,6 +294,8 @@ export function BuildingSteckbrief({
         {/* Kennzahlen */}
         <Section title="Kennzahlen">
           <KVRow label="BGF" value={`${fmtNum(bgf)} m²`} />
+          <KVRow label="Wohnfläche" value={`${fmtNum(wohnflaeche)} m²`} />
+          <KVRow label="WF-Effizienz" value={`${wohnflaechenEffizienz.toFixed(1)}%`} />
           <KVRow label="BRI" value={`${fmtNum(bri)} m³`} />
           <KVRow label="Grundfläche" value={`${fmtNum(gf)} m²`} />
           <KVRow label="Stellplätze" value={`${stellplaetze}`} />
