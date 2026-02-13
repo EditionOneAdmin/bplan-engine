@@ -54,6 +54,7 @@ export interface PlacedUnit {
   units: number;
   position: [number, number];    // [lat, lng]
   rotation: number;              // degrees 0-360
+  wfEffizienz: number;
 }
 
 export interface Filters {
@@ -75,4 +76,5 @@ export interface Metrics {
   grzUsage: number;
   gfzUsage: number;
   compliant: boolean;
+  totalWohnflaeche: number;
 }

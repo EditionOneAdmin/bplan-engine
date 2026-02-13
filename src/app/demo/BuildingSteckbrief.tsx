@@ -11,6 +11,7 @@ interface SteckbriefProps {
   facade: FacadeType;
   energy: string;
   efficiency: string;
+  wfEffizienz?: number;
   onClose: () => void;
 }
 
@@ -202,13 +203,14 @@ export function BuildingSteckbrief({
   facade,
   energy,
   efficiency,
+  wfEffizienz: wfEffizienzProp,
   onClose,
 }: SteckbriefProps) {
   const mfr = MANUFACTURERS[building.manufacturer];
   const totalWE = building.wePerGeschoss * geschosse;
   const bgf = building.bgfPerGeschoss * geschosse;
-  const wohnflaeche = Math.round(bgf * 0.75);
-  const wohnflaechenEffizienz = 75.0; // dummy for now
+  const wohnflaechenEffizienz = wfEffizienzProp ?? 75;
+  const wohnflaeche = Math.round(bgf * wohnflaechenEffizienz / 100);
   const bri = Math.round(bgf * 3.25);
   const gf = building.footprint.width * building.footprint.depth;
   const stellplaetze = Math.ceil(totalWE * 0.8);

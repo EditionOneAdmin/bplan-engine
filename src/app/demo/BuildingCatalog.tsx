@@ -145,6 +145,8 @@ function Configurator({
   setFacade,
   onPlace,
   matchResult,
+  wfEffizienz,
+  setWfEffizienz,
 }: {
   building: BuildingModule;
   geschosse: number;
@@ -155,6 +157,8 @@ function Configurator({
   setFacade: (f: FacadeType) => void;
   onPlace: () => void;
   matchResult: MatchResult | null;
+  wfEffizienz: number;
+  setWfEffizienz: (n: number) => void;
 }) {
   const bgf = building.bgfPerGeschoss * geschosse;
   const we = building.wePerGeschoss * geschosse;
@@ -222,15 +226,40 @@ function Configurator({
         </div>
       </div>
 
+      {/* WF-Effizienz */}
+      <div className="mb-3">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-[10px] text-white/40">WF-Effizienz</span>
+          <span className="text-[10px] text-white/70 font-medium">{wfEffizienz}%</span>
+        </div>
+        <input
+          type="range"
+          min={60}
+          max={85}
+          value={wfEffizienz}
+          onChange={(e) => setWfEffizienz(parseInt(e.target.value))}
+          className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+          style={{
+            background: `linear-gradient(to right, #0D9488 ${((wfEffizienz - 60) / 25) * 100}%, rgba(255,255,255,0.1) ${((wfEffizienz - 60) / 25) * 100}%)`,
+          }}
+        />
+        <div className="flex justify-between text-[9px] text-white/30 mt-0.5">
+          <span>60%</span>
+          <span>85%</span>
+        </div>
+      </div>
+
       {/* Kennzahlen */}
       <div className="bg-[#1E293B] rounded-lg p-2.5 border border-white/5 mb-3">
         <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2 font-semibold">Kennzahlen</div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
           <div className="flex justify-between"><span className="text-white/50">BGF</span><span className="text-white font-medium">{bgf.toLocaleString("de-DE")} m²</span></div>
+          <div className="flex justify-between"><span className="text-white/50">Wohnfl.</span><span className="text-white font-medium">{Math.round(bgf * wfEffizienz / 100).toLocaleString("de-DE")} m²</span></div>
           <div className="flex justify-between"><span className="text-white/50">WE</span><span className="text-white font-medium">{we}</span></div>
           <div className="flex justify-between"><span className="text-white/50">GF</span><span className="text-white font-medium">{gf.toLocaleString("de-DE")} m²</span></div>
           <div className="flex justify-between"><span className="text-white/50">BRI</span><span className="text-white font-medium">{bri.toLocaleString("de-DE")} m³</span></div>
           <div className="flex justify-between"><span className="text-white/50">Stellpl.</span><span className="text-white font-medium">{stellpl}</span></div>
+          <div className="flex justify-between"><span className="text-white/50">WF-Eff.</span><span className="text-teal-400 font-medium">{wfEffizienz}%</span></div>
           <div className="flex justify-between"><span className="text-white/50">~Kosten</span><span className="text-white font-medium">€{(kosten / 1_000_000).toFixed(2)} Mio</span></div>
         </div>
         <div className="mt-2">
@@ -283,6 +312,8 @@ interface Props {
   onPlace: () => void;
   activeBaufeld: Baufeld | null;
   filters: Filters;
+  wfEffizienz: number;
+  setWfEffizienz: (n: number) => void;
 }
 
 export function BuildingCatalog({
@@ -305,6 +336,8 @@ export function BuildingCatalog({
   onPlace,
   activeBaufeld,
   filters,
+  wfEffizienz,
+  setWfEffizienz,
 }: Props) {
   const selectedBuilding = buildings.find((b) => b.id === selectedId) || null;
 
@@ -481,6 +514,8 @@ export function BuildingCatalog({
           setFacade={setFacade}
           onPlace={onPlace}
           matchResult={selectedMatchResult}
+          wfEffizienz={wfEffizienz}
+          setWfEffizienz={setWfEffizienz}
         />
       )}
 

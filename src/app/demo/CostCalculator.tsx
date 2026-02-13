@@ -428,7 +428,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
     // Total BGF
     const totalBGF = placedUnits.reduce((s, u) => s + u.area, 0);
-    const totalWohnflaeche = Math.round(totalBGF * 0.75);
+    const totalWohnflaeche = placedUnits.reduce((s, u) => s + Math.round(u.area * (u.wfEffizienz || 75) / 100), 0);
 
     // KG 100: Grundstück
     const kg100 = baufelder.reduce((sum, bf) => {

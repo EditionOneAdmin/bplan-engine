@@ -78,6 +78,7 @@ export function BottomBar({ metrics, drawing, onToggleDraw, matchScore, onExport
       <div className="w-px h-8 bg-white/10 shrink-0" />
       <Stat label="Wohneinheiten" value={metrics.totalUnits} />
       <Stat label="BGF" value={metrics.totalBGF.toLocaleString("de-DE")} unit="m²" />
+      <Stat label="Wohnfläche" value={metrics.totalWohnflaeche.toLocaleString("de-DE")} unit="m²" />
       <Stat label="Stellplätze" value={metrics.parkingNeeded} />
       <div className="w-px h-8 bg-white/10 shrink-0" />
       {/* Compliance traffic light */}

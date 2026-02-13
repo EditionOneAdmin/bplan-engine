@@ -29,6 +29,7 @@ export default function DemoApp() {
   const [configGeschosse, setConfigGeschosse] = useState(5);
   const [configRoof, setConfigRoof] = useState<RoofType>("flat");
   const [configFacade, setConfigFacade] = useState<FacadeType>("putz");
+  const [configWfEffizienz, setConfigWfEffizienz] = useState(75);
 
   // When selecting a building, reset configurator to its defaults
   const handleSelectBuilding = useCallback((id: string | null) => {
@@ -90,11 +91,12 @@ export default function DemoApp() {
         units: we,
         position,
         rotation,
+        wfEffizienz: configWfEffizienz,
       },
     ]);
     setPlaceMode(false);
     setSelectedBuilding(null);
-  }, [selectedBuilding, selectedBaufeld, baufelder, configGeschosse, configRoof, configFacade]);
+  }, [selectedBuilding, selectedBaufeld, baufelder, configGeschosse, configRoof, configFacade, configWfEffizienz]);
 
   const handleCancelPlace = useCallback(() => {
     setPlaceMode(false);
@@ -139,6 +141,7 @@ export default function DemoApp() {
             units: we,
             position: [centerLat, centerLng],
             rotation: 0,
+            wfEffizienz: configWfEffizienz,
           },
         ]);
         setPlaceMode(false);
@@ -147,7 +150,7 @@ export default function DemoApp() {
         setSelectedBaufeld((prev) => (prev === baufeldId ? null : baufeldId));
       }
     },
-    [placeMode, selectedBuilding, baufelder, configGeschosse, configRoof, configFacade]
+    [placeMode, selectedBuilding, baufelder, configGeschosse, configRoof, configFacade, configWfEffizienz]
   );
 
   const handleRemoveUnit = useCallback((unitId: string) => {
@@ -226,9 +229,11 @@ export default function DemoApp() {
     const totalUnits = placedUnits.reduce((s, u) => s + u.units, 0);
     const parkingNeeded = Math.ceil(totalUnits * 0.8);
 
+    const totalWohnflaeche = placedUnits.reduce((s, u) => s + Math.round(u.area * (u.wfEffizienz || 75) / 100), 0);
+
     const bfForMetrics = activeBaufeld || baufelder[0];
     if (!bfForMetrics) {
-      return { totalBGF, totalUnits, parkingNeeded, grzUsage: 0, gfzUsage: 0, compliant: true };
+      return { totalBGF, totalUnits, parkingNeeded, grzUsage: 0, gfzUsage: 0, compliant: true, totalWohnflaeche };
     }
 
     const maxGrundfläche = bfForMetrics.maxGRZ * bfForMetrics.grundstuecksflaecheM2;
@@ -249,7 +254,7 @@ export default function DemoApp() {
     const gfzUsage = maxGeschossflaeche > 0 ? bfBGF / maxGeschossflaeche : 0;
     const compliant = grzUsage <= 1 && gfzUsage <= 1;
 
-    return { totalBGF, totalUnits, parkingNeeded, grzUsage, gfzUsage, compliant };
+    return { totalBGF, totalUnits, parkingNeeded, grzUsage, gfzUsage, compliant, totalWohnflaeche };
   }, [placedUnits, activeBaufeld, baufelder]);
 
   const handleOpenExport = useCallback(() => {
@@ -359,6 +364,8 @@ export default function DemoApp() {
               onPlace={handlePlace}
               activeBaufeld={activeBaufeld}
               filters={filters}
+              wfEffizienz={configWfEffizienz}
+              setWfEffizienz={setConfigWfEffizienz}
             />
             )}
           </div>
@@ -403,6 +410,7 @@ export default function DemoApp() {
             facade={unit.facade}
             energy={filters.energy}
             efficiency={filters.efficiency}
+            wfEffizienz={unit.wfEffizienz}
             onClose={() => setSteckbriefUnit(null)}
           />
         );
