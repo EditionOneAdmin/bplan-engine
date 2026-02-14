@@ -22,7 +22,7 @@ export const SHAPE_CONFIG: Record<BuildingShape, { label: string; icon: string }
 export const BUILDINGS: BuildingModule[] = [
   // ── GROPYUS (3) ──
   {
-    id: "gropius-riegel-36",
+    id: "gropyus-riegel-36",
     name: "Riegel R-36",
     manufacturer: "gropyus",
     manufacturerLabel: "GROPYUS",
@@ -40,10 +40,10 @@ export const BUILDINGS: BuildingModule[] = [
     pricePerSqm: 1890,
     tags: ["holzbau", "kfw40", "barrierefrei"],
     color: "#3B82F6",
-    rendering: "/bplan-engine/renderings/optimized/gropius-riegel-36.jpg",
+    rendering: "/bplan-engine/renderings/optimized/gropyus-riegel-36.jpg",
   },
   {
-    id: "gropius-punkt-16",
+    id: "gropyus-punkt-16",
     name: "Punkt P-16",
     manufacturer: "gropyus",
     manufacturerLabel: "GROPYUS",
@@ -61,10 +61,10 @@ export const BUILDINGS: BuildingModule[] = [
     pricePerSqm: 2150,
     tags: ["kfw40", "barrierefrei", "aufzug"],
     color: "#3B82F6",
-    rendering: "/bplan-engine/renderings/optimized/gropius-punkt-16.jpg",
+    rendering: "/bplan-engine/renderings/optimized/gropyus-punkt-16.jpg",
   },
   {
-    id: "gropius-u-36",
+    id: "gropyus-u-36",
     name: "U-Block U-36",
     manufacturer: "gropyus",
     manufacturerLabel: "GROPYUS",
@@ -82,7 +82,7 @@ export const BUILDINGS: BuildingModule[] = [
     pricePerSqm: 1780,
     tags: ["kfw40", "innenhof"],
     color: "#3B82F6",
-    rendering: "/bplan-engine/renderings/optimized/gropius-u-36.jpg",
+    rendering: "/bplan-engine/renderings/optimized/gropyus-u-36.jpg",
   },
   // ── Nokera (2) ──
   {
