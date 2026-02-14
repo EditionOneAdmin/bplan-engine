@@ -18,7 +18,15 @@ export function getBuildings(): BuildingModule[] {
     const raw = localStorage.getItem(STORAGE_KEY_B);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Migration: clear stale Gropius data
+        if (parsed.some((b: BuildingModule) => b.manufacturerLabel === "Gropius")) {
+          localStorage.removeItem(STORAGE_KEY_B);
+          localStorage.removeItem(STORAGE_KEY_M);
+          return BUILDINGS;
+        }
+        return parsed;
+      }
     }
   } catch {}
   return BUILDINGS;

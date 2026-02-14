@@ -71,10 +71,20 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   deleteManufacturer: (id) => { const n = get().manufacturers.filter((x) => x.id !== id); set({ manufacturers: n }); saveJSON(STORAGE_KEY_M, n); },
   hydrate: () => {
     const auth = typeof window !== "undefined" && localStorage.getItem(AUTH_KEY) === "1";
-    set({
-      authenticated: auth,
-      buildings: loadJSON(STORAGE_KEY_B, BUILDINGS),
-      manufacturers: loadJSON(STORAGE_KEY_M, defaultManufacturers()),
-    });
+    let blds = loadJSON(STORAGE_KEY_B, BUILDINGS);
+    let mfrs = loadJSON(STORAGE_KEY_M, defaultManufacturers());
+
+    // Migration: Gropius → GROPYUS
+    const hasOldGropius = blds.some((b: BuildingModule) => b.manufacturerLabel === "Gropius") ||
+      mfrs.some((m: ManufacturerData) => m.label === "Gropius");
+    if (hasOldGropius) {
+      // Clear stale data, reload from code defaults
+      localStorage.removeItem(STORAGE_KEY_B);
+      localStorage.removeItem(STORAGE_KEY_M);
+      blds = BUILDINGS;
+      mfrs = defaultManufacturers();
+    }
+
+    set({ authenticated: auth, buildings: blds, manufacturers: mfrs });
   },
 }));
