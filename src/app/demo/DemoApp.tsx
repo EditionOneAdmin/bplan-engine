@@ -12,6 +12,7 @@ import { ExportModal } from "./ExportModal";
 import type { ExportConfig } from "./ExportModal";
 import type { Baufeld, PlacedUnit, Filters, Manufacturer, BuildingShape, RoofType, FacadeType } from "./types";
 import { BUILDINGS } from "./data";
+import { getBuildings } from "./catalogData";
 import { calculateMatch } from "./matchScore";
 import { exportProjectPlan } from "./exportPDF";
 import type { CostData } from "./exportPDF";
@@ -19,6 +20,7 @@ import type { CostData } from "./exportPDF";
 const MapPanel = dynamic(() => import("./MapPanel"), { ssr: false });
 
 export default function DemoApp() {
+  const buildings = useMemo(() => getBuildings(), []);
   const [drawing, setDrawing] = useState(false);
   const [baufelder, setBaufelder] = useState<Baufeld[]>([]);
   const [selectedBaufeld, setSelectedBaufeld] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export default function DemoApp() {
   const handleSelectBuilding = useCallback((id: string | null) => {
     setSelectedBuilding(id);
     if (id) {
-      const b = BUILDINGS.find((bb) => bb.id === id);
+      const b = buildings.find((bb) => bb.id === id);
       if (b) {
         setConfigGeschosse(b.defaultGeschosse);
         setConfigRoof(b.roofOptions[0]);
@@ -70,7 +72,7 @@ export default function DemoApp() {
 
   const handlePlaceOnMap = useCallback((position: [number, number], rotation: number) => {
     if (!selectedBuilding) return;
-    const building = BUILDINGS.find((b) => b.id === selectedBuilding);
+    const building = buildings.find((b) => b.id === selectedBuilding);
     if (!building) return;
 
     // Find which baufeld contains this position (or use first/selected)
@@ -119,7 +121,7 @@ export default function DemoApp() {
     (baufeldId: string) => {
       if (placeMode && selectedBuilding) {
         const bf = baufelder.find((b) => b.id === baufeldId);
-        const building = BUILDINGS.find((b) => b.id === selectedBuilding);
+        const building = buildings.find((b) => b.id === selectedBuilding);
         if (!bf || !building) return;
 
         const bgf = building.bgfPerGeschoss * configGeschosse;
@@ -246,7 +248,7 @@ export default function DemoApp() {
 
     // GRZ: use footprint (GF) of placed buildings
     const bfGF = bfUnits.reduce((s, u) => {
-      const b = BUILDINGS.find((bb) => bb.id === u.buildingId);
+      const b = buildings.find((bb) => bb.id === u.buildingId);
       return s + (b ? b.footprint.width * b.footprint.depth : 0);
     }, 0);
 
@@ -267,7 +269,7 @@ export default function DemoApp() {
       await exportProjectPlan({
         baufelder,
         placedUnits,
-        buildings: BUILDINGS,
+        buildings: buildings,
         filters,
         metrics,
         config: exportConfig,
@@ -329,13 +331,13 @@ export default function DemoApp() {
               <CostCalculator
                 baufelder={baufelder}
                 placedUnits={placedUnits}
-                buildings={BUILDINGS}
+                buildings={buildings}
                 filters={filters}
                 onCalcUpdate={setCostData}
                 matchScore={
                   selectedBuilding && activeBaufeld
                     ? calculateMatch(
-                        BUILDINGS.find((b) => b.id === selectedBuilding)!,
+                        buildings.find((b) => b.id === selectedBuilding)!,
                         activeBaufeld,
                         filters,
                         configGeschosse
@@ -345,7 +347,7 @@ export default function DemoApp() {
               />
             ) : (
             <BuildingCatalog
-              buildings={BUILDINGS}
+              buildings={buildings}
               selectedId={selectedBuilding}
               onSelect={handleSelectBuilding}
               placedUnits={placedUnits}
@@ -384,7 +386,7 @@ export default function DemoApp() {
         matchScore={
           selectedBuilding && activeBaufeld
             ? calculateMatch(
-                BUILDINGS.find((b) => b.id === selectedBuilding)!,
+                buildings.find((b) => b.id === selectedBuilding)!,
                 activeBaufeld,
                 filters,
                 configGeschosse
@@ -400,7 +402,7 @@ export default function DemoApp() {
       />
       {steckbriefUnit && (() => {
         const unit = placedUnits.find((u) => u.id === steckbriefUnit);
-        const building = unit ? BUILDINGS.find((b) => b.id === unit.buildingId) : null;
+        const building = unit ? buildings.find((b) => b.id === unit.buildingId) : null;
         if (!unit || !building) return null;
         return (
           <BuildingSteckbrief
