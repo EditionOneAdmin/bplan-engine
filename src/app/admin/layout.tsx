@@ -17,11 +17,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { authenticated, logout, hydrate } = useAdminStore();
   const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => { hydrate(); setHydrated(true); }, [hydrate]);
+  useEffect(() => {
+    hydrate();
+    setHydrated(true);
+  }, [hydrate]);
 
   if (!hydrated) return null;
 
-  const isLogin = pathname?.endsWith("/admin/login");
+  const isLogin = pathname === "/bplan-engine/admin/login" || pathname === "/admin/login";
   if (isLogin) return <>{children}</>;
 
   if (!authenticated) {
@@ -40,21 +43,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {NAV.map((n) => {
-            const active = pathname === `/bplan-engine${n.href}` || pathname === n.href;
+            const active = pathname === n.href || pathname === `/bplan-engine${n.href}`;
             return (
-              <button key={n.href} onClick={() => router.push(`/bplan-engine${n.href}`)}
+              <button
+                key={n.href}
+                onClick={() => router.push(`/bplan-engine${n.href}`)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all cursor-pointer ${
-                  active ? "bg-blue-600/20 text-blue-400 border border-blue-600/30" : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                }`}>
-                <n.icon size={18} />{n.label}
+                  active
+                    ? "bg-blue-600/20 text-blue-400 border border-blue-600/30"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                }`}
+              >
+                <n.icon size={18} />
+                {n.label}
               </button>
             );
           })}
         </nav>
         <div className="p-4 border-t border-slate-800">
-          <button onClick={() => { logout(); router.push("/bplan-engine/admin/login"); }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-600/10 transition cursor-pointer">
-            <LogOut size={18} />Logout
+          <button
+            onClick={() => { logout(); router.push("/bplan-engine/admin/login"); }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-600/10 transition cursor-pointer"
+          >
+            <LogOut size={18} />
+            Logout
           </button>
         </div>
       </aside>
