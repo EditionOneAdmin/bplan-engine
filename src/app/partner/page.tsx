@@ -224,7 +224,7 @@ function Benefits() {
 
 /* ─── 4. PARTNER LOGOS ─────────────────────────────────── */
 
-const partners = ["Gropius", "Nokera", "ALHO", "Goldbeck", "Max Bögl"];
+const partners = ["GROPYUS", "Nokera", "ALHO", "Goldbeck", "Max Bögl"];
 
 function Partners() {
   return (

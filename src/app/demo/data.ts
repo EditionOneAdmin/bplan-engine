@@ -3,7 +3,7 @@ import type { Baufeld, BuildingModule, Manufacturer, BuildingShape } from "./typ
 export const BAUFELDER: Baufeld[] = [];
 
 export const MANUFACTURERS: Record<Manufacturer, { label: string; color: string; accent: string }> = {
-  "gropius": { label: "Gropius", color: "#3B82F6", accent: "#60A5FA" },
+  "gropyus": { label: "GROPYUS", color: "#3B82F6", accent: "#60A5FA" },
   "nokera": { label: "Nokera", color: "#06B6D4", accent: "#22D3EE" },
   "alho": { label: "ALHO", color: "#F59E0B", accent: "#FBBF24" },
   "goldbeck": { label: "Goldbeck", color: "#EF4444", accent: "#F87171" },
@@ -20,12 +20,12 @@ export const SHAPE_CONFIG: Record<BuildingShape, { label: string; icon: string }
 };
 
 export const BUILDINGS: BuildingModule[] = [
-  // ── Gropius (3) ──
+  // ── GROPYUS (3) ──
   {
     id: "gropius-riegel-36",
     name: "Riegel R-36",
-    manufacturer: "gropius",
-    manufacturerLabel: "Gropius",
+    manufacturer: "gropyus",
+    manufacturerLabel: "GROPYUS",
     shape: "riegel",
     shapeLabel: "Riegel",
     footprint: { width: 12, depth: 36 },
@@ -45,8 +45,8 @@ export const BUILDINGS: BuildingModule[] = [
   {
     id: "gropius-punkt-16",
     name: "Punkt P-16",
-    manufacturer: "gropius",
-    manufacturerLabel: "Gropius",
+    manufacturer: "gropyus",
+    manufacturerLabel: "GROPYUS",
     shape: "punkthaus",
     shapeLabel: "Punkthaus",
     footprint: { width: 16, depth: 16 },
@@ -66,8 +66,8 @@ export const BUILDINGS: BuildingModule[] = [
   {
     id: "gropius-u-36",
     name: "U-Block U-36",
-    manufacturer: "gropius",
-    manufacturerLabel: "Gropius",
+    manufacturer: "gropyus",
+    manufacturerLabel: "GROPYUS",
     shape: "u-form",
     shapeLabel: "U-Form",
     footprint: { width: 36, depth: 24 },

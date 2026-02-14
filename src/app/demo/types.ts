@@ -16,7 +16,7 @@ export interface Baufeld {
 }
 
 export type BuildingShape = "riegel" | "l-winkel" | "u-form" | "punkthaus" | "t-form" | "doppelhaus";
-export type Manufacturer = "gropius" | "nokera" | "alho" | "goldbeck" | "max-boegl";
+export type Manufacturer = "gropyus" | "nokera" | "alho" | "goldbeck" | "max-boegl";
 export type RoofType = "flat" | "saddle" | "pult";
 export type FacadeType = "putz" | "klinker" | "holz" | "metall";
 export type EnergyRating = "A+" | "A" | "B" | "C";
