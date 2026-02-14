@@ -13,7 +13,7 @@ export default function LoginPage() {
 
   useEffect(() => { hydrate(); }, [hydrate]);
   useEffect(() => {
-    if (authenticated) router.replace("/bplan-engine/admin");
+    if (authenticated) router.replace("/admin");
   }, [authenticated, router]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -23,7 +23,7 @@ export default function LoginPage() {
 
     setTimeout(() => {
       if (login(password)) {
-        router.push("/bplan-engine/admin");
+        router.push("/admin");
       } else {
         setError(true);
         setLoading(false);
