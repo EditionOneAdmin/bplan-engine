@@ -80,9 +80,9 @@ export const regions: Record<string, RegionConfig> = {
       flurstuecke: {
         url: "https://www.wms.nrw.de/geobasis/wms_nw_alkis",
         layers: "adv_alkis_flurstuecke",
-        styles: "Gelb",
+        styles: "Farbe",
         attribution: "© GeoBasis NRW",
-        opacity: 0.8,
+        opacity: 0.9,
       },
       gebaeude: {
         url: "https://www.wms.nrw.de/geobasis/wms_nw_alkis",
