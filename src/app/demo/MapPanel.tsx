@@ -21,6 +21,7 @@ import { BUILDINGS } from "./data";
 import PlacedBuildings, { GhostPolygon } from "./PlacedBuildings";
 import type { RegionConfig } from "../../config/regionTypes";
 import { RegionSelector } from "./RegionSelector";
+import { getMietspiegel } from "../../data/mietspiegel";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -401,6 +402,46 @@ function ClickFeatureInfo({ enabled, region }: { enabled: boolean; region: Regio
           content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
             <div style="color:#64748b;font-style:italic;">💰 Kein Bodenrichtwert gefunden</div></div>`;
         }
+      }
+
+      // --- Mietspiegel Lookup ---
+      let gemeindeName = "";
+      if (flurData) {
+        if (typeof flurData === "string") {
+          // Try to extract Gemeinde from WMS HTML (NRW)
+          const parser2 = new DOMParser();
+          const doc2 = parser2.parseFromString(flurData, "text/html");
+          const cells2 = Array.from(doc2.querySelectorAll("td"));
+          for (let i = 0; i < cells2.length - 1; i++) {
+            const label = (cells2[i].textContent || "").replace(/:/g, "").trim().toLowerCase();
+            if (label.includes("gemeinde") && !label.includes("kennzeichen")) {
+              gemeindeName = (cells2[i + 1].textContent || "").trim();
+              break;
+            }
+          }
+        } else {
+          // WFS JSON (Berlin etc.)
+          const features = flurData?.features || [];
+          if (features.length > 0) {
+            const props = features[0].properties || {};
+            gemeindeName = props.namgem || props.gemeinde || "";
+          }
+        }
+      }
+      // For Berlin region, default gemeinde
+      if (!gemeindeName && region.id === "berlin") gemeindeName = "Berlin";
+
+      const mietspiegelEntry = gemeindeName ? getMietspiegel(gemeindeName) : null;
+      if (mietspiegelEntry) {
+        const m = mietspiegelEntry.mieten;
+        content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
+          <div style="font-weight:600;margin-bottom:4px;color:#34D399;">🏠 Mietspiegel ${mietspiegelEntry.gemeinde} (${mietspiegelEntry.stand})</div>
+          <div><span style="color:#94a3b8;">Einfach:</span> ${m.einfach.min.toFixed(2).replace(".",",")} – ${m.einfach.max.toFixed(2).replace(".",",")} €/m²</div>
+          <div><span style="color:#94a3b8;">Mittel:</span> ${m.mittel.min.toFixed(2).replace(".",",")} – ${m.mittel.max.toFixed(2).replace(".",",")} €/m²</div>
+          <div><span style="color:#94a3b8;">Gut:</span> ${m.gut.min.toFixed(2).replace(".",",")} – ${m.gut.max.toFixed(2).replace(".",",")} €/m²</div>
+          <div style="margin-top:4px;font-weight:600;">Ø Durchschnitt: ${mietspiegelEntry.durchschnitt.toFixed(2).replace(".",",")} €/m²</div>
+          <div style="margin-top:4px;font-size:10px;color:#64748b;">⚠️ Orientierungswerte – kein Rechtsanspruch. Quelle: ${mietspiegelEntry.quelle}</div>
+        </div>`;
       }
 
       content += `</div>`;

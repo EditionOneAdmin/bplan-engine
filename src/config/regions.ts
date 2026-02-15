@@ -104,6 +104,13 @@ export const regions: Record<string, RegionConfig> = {
         attribution: "© GeoBasis NRW – DGM",
         opacity: 0.6,
       },
+      bodenrichtwerte: {
+        url: "https://www.wms.nrw.de/boris/wms_de_bodenrichtwerte",
+        layers: "brw_wohnbauflaeche",
+        styles: "",
+        attribution: "© BORIS NRW – Bodenrichtwerte 2025",
+        opacity: 0.5,
+      },
     },
     wfs: {
       flurstuecke: {
@@ -116,6 +123,10 @@ export const regions: Record<string, RegionConfig> = {
       flurstuecke: {
         url: "https://www.wms.nrw.de/geobasis/wms_nw_alkis",
         layer: "adv_alkis_flurstuecke",
+      },
+      bodenrichtwerte: {
+        url: "https://www.wms.nrw.de/boris/wms_de_bodenrichtwerte",
+        layer: "brw_wohnbauflaeche",
       },
     },
     lbo: {
