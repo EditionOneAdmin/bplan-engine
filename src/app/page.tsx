@@ -147,15 +147,28 @@ function Hero() {
           </a>
         </motion.div>
 
-        {/* Hero image */}
+        {/* Hero video */}
         <motion.div
           className="mt-16 w-full max-w-4xl"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bplan-engine/images/hero-cityscape.jpg" alt="Moderne Stadtquartier-Visualisierung" className="w-full rounded-2xl shadow-2xl" />
+          <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full"
+              poster="/bplan-engine/images/hero-cityscape.jpg"
+            >
+              <source src="/bplan-engine/videos/hero-planning.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute bottom-4 left-4 rounded-lg bg-black/50 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm">
+              Von der digitalen Planung zum fertigen Haus
+            </div>
+          </div>
         </motion.div>
 
         {/* Decorative gradient blob */}
@@ -171,40 +184,53 @@ function Hero() {
 const problems = [
   {
     icon: Clock,
-    stat: "18 Monate",
-    label: "Ø bis zur Baugenehmigung in deutschen Großstädten",
+    before: "3 Wochen",
+    beforeLabel: "auf Bodenrichtwert-Auskunft warten",
+    after: "1 Klick",
+    afterLabel: "Live-Bodenrichtwerte direkt auf der Karte",
   },
   {
     icon: ClipboardList,
-    stat: "62%",
-    label: "aller Bauanträge erhalten Nachforderungen",
+    before: "5 Portale",
+    beforeLabel: "für Flurstücke, B-Plan, Mietspiegel, BORIS durchsuchen",
+    after: "1 Plattform",
+    afterLabel: "Alle Geodaten auf einer interaktiven Karte",
   },
   {
     icon: Coins,
-    stat: "€85k+",
-    label: "Mehrkosten pro Monat Verzögerung je Projekt",
+    before: "Tage",
+    beforeLabel: "manuelle Recherche pro Grundstück",
+    after: "Sekunden",
+    afterLabel: "Automatische Analyse mit Live-Daten",
   },
 ];
 
 function Problem() {
   return (
     <Section id="problem" gray>
-      <FadeIn className="mb-8 max-w-2xl mx-auto">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/bplan-engine/images/problem-documents.jpg" alt="Bauantrags-Dokumente mit Nachforderungen" className="w-full h-48 object-cover rounded-2xl shadow-lg" />
-      </FadeIn>
-      <SectionHeading title="Genehmigungsverfahren bremsen Ihre Pipeline." />
+      <SectionHeading
+        title="Grundstücksanalyse dauert zu lange."
+        subtitle="Projektentwickler verbringen Wochen mit manueller Recherche über dutzende Portale. Das geht besser."
+      />
       <div className="grid gap-8 md:grid-cols-3">
         {problems.map((p, i) => (
           <FadeIn key={i} delay={i * 0.12}>
-            <div className="rounded-2xl border border-gray-border bg-white p-8 text-center shadow-sm">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/5">
+            <div className="rounded-2xl border border-gray-border bg-white p-8 shadow-sm">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/5">
                 <p.icon className="h-7 w-7 text-primary" />
               </div>
-              <p className="text-4xl font-extrabold text-primary">{p.stat}</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-text/70">
-                {p.label}
-              </p>
+              {/* Before */}
+              <div className="text-center mb-4 pb-4 border-b border-gray-border">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-text/40 mb-1">Vorher</p>
+                <p className="text-2xl font-extrabold text-red-500/80">{p.before}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-text/60">{p.beforeLabel}</p>
+              </div>
+              {/* After */}
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-text/40 mb-1">Mit B-Plan Engine</p>
+                <p className="text-2xl font-extrabold text-accent">{p.after}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-text/60">{p.afterLabel}</p>
+              </div>
             </div>
           </FadeIn>
         ))}
