@@ -37,6 +37,7 @@ export interface RegionConfig {
     gebaeude?: WMSLayerConfig;
     bebauungsplaene?: WMSLayerConfig;
     bodenrichtwerte?: WMSLayerConfig;
+    immobilienrichtwerte?: WMSLayerConfig;
     wohnlagen?: WMSLayerConfig;
     orthophotos?: WMSLayerConfig;
     dgm?: WMSLayerConfig;

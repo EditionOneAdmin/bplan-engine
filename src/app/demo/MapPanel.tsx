@@ -1135,6 +1135,20 @@ export default function MapPanel({
               />
             </LayersControl.Overlay>
           )}
+          {region.layers.immobilienrichtwerte && (
+            <LayersControl.Overlay name="Immobilienrichtwerte (MFH)">
+              <WMSTileLayer
+                url={region.layers.immobilienrichtwerte.url}
+                layers={region.layers.immobilienrichtwerte.layers}
+                styles=""
+                format="image/png"
+                transparent={true}
+                opacity={region.layers.immobilienrichtwerte.opacity ?? 0.5}
+                version="1.1.1"
+                attribution={region.layers.immobilienrichtwerte.attribution || ""}
+              />
+            </LayersControl.Overlay>
+          )}
           {region.layers.dgm && (
             <LayersControl.Overlay name="Geländemodell (DGM)">
               <WMSTileLayer
