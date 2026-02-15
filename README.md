@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# B-Plan Engine
 
-## Getting Started
+Die **B-Plan Engine** ist ein browserbasierter Konfigurator für seriellen Wohnungsbau auf Bebauungsplan-Flächen in Berlin. Nutzer können Baufelder auf einer interaktiven Karte zeichnen, modulare Gebäude verschiedener Hersteller platzieren, Kosten nach DIN 276 kalkulieren und das Ergebnis als PDF-Projektplan exportieren — komplett ohne Backend, rein clientseitig.
 
-First, run the development server:
+## Features
+
+- 🗺️ **Interaktive Karte** — Leaflet + WMS-Layer (Flurstücke, B-Pläne, Bodenrichtwerte, Wohnlagen) via Berliner Geodaten-Infrastruktur
+- 🏗️ **Gebäudekatalog** — 15+ Module von 5 Herstellern (GROPYUS, Nokera, ALHO, Goldbeck, Max Bögl) in 6 Gebäudeformen
+- 📐 **Baufeld-Editor** — Polygon-Zeichentool mit automatischer GRZ/GFZ-Berechnung und B-Plan-Compliance-Check
+- 💰 **Kostenrechner** — DIN 276 Kostengruppen, Finanzierungsmodell, Wirtschaftlichkeitsanalyse, Mietspiegel-Integration
+- 📄 **PDF-Export** — Modularer Projektplan mit Deckblatt, Lageplan, Gebäude-Steckbriefen und Kostenaufstellung
+- ⚙️ **Admin-Bereich** — Hersteller und Gebäude-Module verwalten (Passwort: `Bau-Turbo`)
+- 🎯 **Match-Score** — Automatische Bewertung der Gebäude-Eignung pro Baufeld
+
+## Tech Stack
+
+| Bereich | Technologie |
+|---------|------------|
+| Framework | Next.js 16 (App Router, Static Export) |
+| UI | React 19, Tailwind CSS 4, Lucide Icons |
+| Karte | Leaflet 1.9 + react-leaflet 5 |
+| State | Zustand 5 |
+| PDF | jsPDF + jspdf-autotable |
+| Screenshots | html2canvas |
+| Animationen | Framer Motion |
+| Geodaten | WMS Services der GDI Berlin |
+| Deploy | GitHub Pages (Static Export) |
+
+## Setup & Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Abhängigkeiten installieren
+npm install
+
+# Development Server
+npm run dev        # → http://localhost:3000/bplan-engine/
+
+# Production Build (Static Export)
+npm run build      # → Ausgabe in out/
+
+# Lint
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Projekt-Struktur
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+website/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx                    # Landing Page
+│   │   ├── layout.tsx                  # Root Layout
+│   │   ├── demo/                       # Haupt-Konfigurator
+│   │   │   ├── DemoApp.tsx             # App-Shell, State-Orchestrierung
+│   │   │   ├── MapPanel.tsx            # Leaflet-Karte, WMS, Baufeld-Editor
+│   │   │   ├── BuildingCatalog.tsx     # Gebäude-Auswahl + Konfigurator
+│   │   │   ├── CostCalculator.tsx      # DIN 276 Kalkulation
+│   │   │   ├── ExportModal.tsx         # PDF-Export Konfiguration
+│   │   │   ├── exportPDF.ts            # PDF-Generierung (jsPDF)
+│   │   │   ├── FilterPanel.tsx         # Filter & Strategie
+│   │   │   ├── PlacedBuildings.tsx     # Platzierte Gebäude auf Karte
+│   │   │   ├── BuildingSteckbrief.tsx  # Detail-Modal je Gebäude
+│   │   │   ├── BottomBar.tsx           # Metriken-Leiste
+│   │   │   ├── DemoHeader.tsx          # Header mit Actions
+│   │   │   ├── types.ts               # TypeScript Interfaces
+│   │   │   ├── data.ts                # Gebäude-/Hersteller-Daten
+│   │   │   ├── catalogData.ts         # localStorage-Sync für Katalog
+│   │   │   └── matchScore.ts          # Baufeld-Gebäude Matching
+│   │   ├── admin/                      # Admin-Bereich
+│   │   │   ├── store.ts               # Zustand Store (Admin)
+│   │   │   ├── hersteller/            # Hersteller-Verwaltung
+│   │   │   ├── module/                # Modul-Verwaltung
+│   │   │   └── export/                # Daten-Export
+│   │   ├── anwendungsfaelle/          # Use-Case Seiten
+│   │   ├── produkt/                   # Produkt-Seite
+│   │   ├── partner/                   # Partner-Seite
+│   │   ├── technologie/              # Technologie-Seite
+│   │   ├── impressum/                # Impressum
+│   │   ├── datenschutz/              # Datenschutz
+│   │   └── lizenzen/                 # Lizenzen
+│   └── components/                    # Shared Landing-Page Komponenten
+│       ├── Hero.tsx
+│       ├── Navbar.tsx
+│       ├── Footer.tsx
+│       └── ...
+├── docs/                              # Technische Dokumentation
+├── public/                            # Statische Assets
+├── next.config.ts                     # Next.js Konfiguration
+└── package.json
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy auf GitHub Pages
 
-## Learn More
+Die App wird als Static Export (`output: "export"`) gebaut und auf GitHub Pages deployed.
 
-To learn more about Next.js, take a look at the following resources:
+### Wichtige Konfiguration (`next.config.ts`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```typescript
+const nextConfig: NextConfig = {
+  output: "export",
+  basePath: "/bplan-engine",
+  trailingSlash: true,       // ⚠️ PFLICHT für GitHub Pages!
+  images: { unoptimized: true },
+};
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> **⚠️ `trailingSlash: true`** ist zwingend erforderlich. Ohne dieses Flag liefert GitHub Pages 404-Fehler für Unterseiten, da es Verzeichnisse mit `index.html` erwartet.
 
-## Deploy on Vercel
+### Deploy-Workflow
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run build          # Erzeugt out/ Verzeichnis
+# out/ wird via GitHub Actions oder manuell auf gh-pages Branch gepusht
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Live:** [https://editiononeadmin.github.io/bplan-engine/demo](https://editiononeadmin.github.io/bplan-engine/demo)
+
+## Lizenz
+
+Proprietär — Edition One GmbH
