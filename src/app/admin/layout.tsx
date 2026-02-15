@@ -16,6 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { authenticated, logout, hydrate } = useAdminStore();
   const [hydrated, setHydrated] = useState(false);
+  const [mobileNav, setMobileNav] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -32,8 +33,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (typeof window !== "undefined") router.replace("/admin/login");
     return null;
   }
-
-  const [mobileNav, setMobileNav] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex">
