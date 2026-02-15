@@ -73,8 +73,8 @@ export const regions: Record<string, RegionConfig> = {
     id: "nrw",
     name: "Nordrhein-Westfalen",
     shortName: "NRW",
-    center: [51.45, 7.01],
-    zoom: 8,
+    center: [51.513, 7.465],  // Dortmund Innenstadt
+    zoom: 15,
     layers: {
       flurstuecke: {
         url: "https://www.wms.nrw.de/geobasis/wms_nw_alkis",
