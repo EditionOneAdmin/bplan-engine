@@ -25,7 +25,13 @@ export function getBuildings(): BuildingModule[] {
           localStorage.removeItem(STORAGE_KEY_M);
           return BUILDINGS;
         }
-        return parsed;
+        // Migration: merge rendering paths from source data
+        const renderingMap = new Map(BUILDINGS.map(b => [b.id, b.rendering]));
+        const merged = parsed.map((b: BuildingModule) => ({
+          ...b,
+          rendering: renderingMap.get(b.id) || b.rendering,
+        }));
+        return merged;
       }
     }
   } catch {}
