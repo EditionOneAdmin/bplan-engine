@@ -935,8 +935,8 @@ export default function Home() {
         <Problem />
         <USPSection />
         <PipelineSection />
-        <ProductShowcase />
         <UseCases />
+        <ProductShowcase />
         <Audience />
         <Technology />
         <FAQ />
