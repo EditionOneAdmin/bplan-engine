@@ -394,17 +394,26 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
   // Zeitachse (replaces bauweise + vermarktungszeit)
   const [bauzeitPreset, setBauzeitPreset] = useState<"seriell" | "konventionell" | "custom">("seriell");
-  const [baustart, setBaustart] = useState(0);
-  const [bauende, setBauende] = useState(6);
-  const [vertriebsstart, setVertriebsstart] = useState(3);
-  const [vertriebsende, setVertriebsende] = useState(12);
+  const [planungStart, setPlanungStart] = useState(0);
+  const [planungEnde, setPlanungEnde] = useState(3);
+  const [baustart, setBaustart] = useState(3);
+  const [bauende, setBauende] = useState(9);
+  const [vertriebsstart, setVertriebsstart] = useState(6);
+  const [vertriebsende, setVertriebsende] = useState(15);
   const [auszahlungskurve, setAuszahlungskurve] = useState<"s-kurve" | "linear">("s-kurve");
 
   // Preset handlers
   const handlePreset = (preset: "seriell" | "konventionell") => {
     setBauzeitPreset(preset);
-    const dur = preset === "seriell" ? 6 : 15;
-    setBauende(baustart + dur);
+    if (preset === "seriell") {
+      setPlanungStart(0); setPlanungEnde(3);
+      setBaustart(3); setBauende(9);
+      setVertriebsstart(6); setVertriebsende(15);
+    } else {
+      setPlanungStart(0); setPlanungEnde(9);
+      setBaustart(9); setBauende(24);
+      setVertriebsstart(18); setVertriebsende(30);
+    }
   };
 
   const handleBaustartChange = (v: number) => {
@@ -504,15 +513,20 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
     // Gesamtlaufzeit
     const gesamtlaufzeitMonate = Math.max(bauende, vertriebsende);
 
+    // Planungshonorare: 60% von KG700 in Planungsphase, 40% in Bauphase
+    const planungsDauer = Math.max(1, planungEnde - planungStart);
+    const kg700Planung = kg700 * 0.6;
+    const kg700Bau = kg700 * 0.4;
+
     // ── Monthly Cashflows ──
     const totalMonths = gesamtlaufzeitMonate;
     const monthlyCashflows: { month: number; cashOut: number; cashIn: number; cumulative: number }[] = [];
 
-    // Build cost distribution (KG200-700) over baustart..bauende
-    const baukostenOhnGrund = (kg200On ? kg200 : 0) + (kg300On ? kg300 : 0) + (kg500On ? kg500 : 0) + (kg700On ? kg700 : 0);
+    // Build cost distribution (KG200-500 + 40% KG700) over baustart..bauende
+    const baukostenOhnGrund = (kg200On ? kg200 : 0) + (kg300On ? kg300 : 0) + (kg500On ? kg500 : 0) + (kg700On ? kg700Bau : 0);
     const finKostenMonatlich = finanzierungAktiv ? finKostenBau / Math.max(1, bauzeit) : 0;
 
-    // Precompute distribution weights
+    // Precompute distribution weights for Bauphase
     const weights: number[] = [];
     let weightSum = 0;
     for (let m = baustart; m < bauende; m++) {
@@ -527,12 +541,17 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
       let cashOut = 0;
       let cashIn = 0;
 
-      // KG100 at baustart
-      if (m === baustart && kg100On) {
+      // KG100 (Grundstück) at planungStart
+      if (m === planungStart && kg100On) {
         cashOut += kg100;
       }
 
-      // Baukosten distributed
+      // Planungshonorare (60% KG700) distributed over Planungsphase
+      if (kg700On && m >= planungStart && m < planungEnde) {
+        cashOut += kg700Planung / planungsDauer;
+      }
+
+      // Baukosten distributed over Bauphase
       if (m >= baustart && m < bauende) {
         const idx = m - baustart;
         const frac = weightSum > 0 ? weights[idx] / weightSum : 0;
@@ -632,7 +651,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
       monthlyCashflows, breakEvenMonth, peakCapital,
       effectivePerSqm, totalGrundstuecksflaeche,
     };
-  }, [baufelder, placedUnits, buildings, kg200Pct, kg500Pct, kg700Pct, zinssatz, tilgung, bereitstellungszins, baustart, bauende, vertriebsstart, vertriebsende, auszahlungskurve, matchScore, kg100On, kg200On, kg300On, kg500On, kg700On, finanzierungAktiv, ekQuote, mietOverride, verkaufOverride, strategy, grundstueckspreisPerSqm, grundstueckspreisGesamt, grundstueckspreisMode]);
+  }, [baufelder, placedUnits, buildings, kg200Pct, kg500Pct, kg700Pct, zinssatz, tilgung, bereitstellungszins, planungStart, planungEnde, baustart, bauende, vertriebsstart, vertriebsende, auszahlungskurve, matchScore, kg100On, kg200On, kg300On, kg500On, kg700On, finanzierungAktiv, ekQuote, mietOverride, verkaufOverride, strategy, grundstueckspreisPerSqm, grundstueckspreisGesamt, grundstueckspreisMode]);
 
   // Push calc data to parent
   useEffect(() => {
@@ -896,13 +915,28 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
                 bauzeitPreset === p ? "bg-teal-600 text-white" : "bg-white/5 text-white/40 hover:bg-white/10"
               }`}
             >
-              {p === "seriell" ? "Seriell 6M" : p === "konventionell" ? "Konv. 15M" : "Custom"}
+              {p === "seriell" ? "Seriell (3+6M)" : p === "konventionell" ? "Konv. (9+15M)" : "Custom"}
             </button>
           ))}
         </div>
 
         {/* Dual Range Sliders */}
         <div className="space-y-4">
+          {/* Planung Range Slider */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-white/50 font-semibold">📐 Planung</span>
+              <span className="text-[10px] text-white/70">{planungStart} – {planungEnde} Mo.</span>
+            </div>
+            <DualRangeSlider
+              min={0} max={48}
+              valueLow={planungStart} valueHigh={planungEnde}
+              onChangeLow={(v) => { setPlanungStart(v); setBauzeitPreset("custom"); }}
+              onChangeHigh={(v) => { setPlanungEnde(v); setBauzeitPreset("custom"); }}
+              color="#8B5CF6"
+            />
+          </div>
+
           {/* Bau Range Slider */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -936,6 +970,21 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         <div className="mt-4 bg-white/5 rounded-lg p-3">
           <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2">Timeline</div>
           <div className="space-y-1.5">
+            {/* Planung bar */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-white/50 w-12 shrink-0">Planung</span>
+              <div className="flex-1 h-5 relative bg-white/5 rounded">
+                <div
+                  className="absolute top-0 h-full rounded"
+                  style={{
+                    left: `${(planungStart / 48) * 100}%`,
+                    width: `${((planungEnde - planungStart) / 48) * 100}%`,
+                    backgroundColor: "#8B5CF6",
+                    opacity: 0.8,
+                  }}
+                />
+              </div>
+            </div>
             {/* Bau bar */}
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-white/50 w-12 shrink-0">Bau</span>
