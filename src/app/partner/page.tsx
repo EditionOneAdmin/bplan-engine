@@ -260,7 +260,7 @@ function Partners() {
 const checklist = [
   "Gebäude-Grundrisse (DWG/PDF)",
   "Technische Daten (Geschosse, Flächen, Energie)",
-  "Richtpreise (€/m²)",
+  "Historische Kosten / Richtpreise (€/m²)",
   "Rendering oder Foto (optional)",
   "BIM-Datei (optional)",
 ];
