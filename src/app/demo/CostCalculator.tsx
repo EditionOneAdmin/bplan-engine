@@ -374,7 +374,9 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
   const [strategy, setStrategy] = useState<"hold" | "sell">(filters.strategy);
   const [mietOverride, setMietOverride] = useState<number | null>(null);
   const [verkaufOverride, setVerkaufOverride] = useState<number | null>(null);
-  const [grundstueckspreis, setGrundstueckspreis] = useState<number | null>(null);
+  const [grundstueckspreisPerSqm, setGrundstueckspreisPerSqm] = useState<number | null>(null);
+  const [grundstueckspreisGesamt, setGrundstueckspreisGesamt] = useState<number | null>(null);
+  const [grundstueckspreisMode, setGrundstueckspreisMode] = useState<"boris" | "sqm" | "total">("boris");
 
   // Toggles for cost groups
   const [kg100On, setKg100On] = useState(true);
@@ -431,11 +433,19 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
     const totalBGF = placedUnits.reduce((s, u) => s + u.area, 0);
     const totalWohnflaeche = placedUnits.reduce((s, u) => s + Math.round(u.area * (u.wfEffizienz || 75) / 100), 0);
 
-    // KG 100: Grundstück (manueller Override oder Bodenrichtwert)
-    const kg100 = baufelder.reduce((sum, bf) => {
-      const pricePerSqm = grundstueckspreis !== null ? grundstueckspreis : (bf.borisBodenrichtwert || 0);
-      return sum + pricePerSqm * bf.grundstuecksflaecheM2;
-    }, 0);
+    // KG 100: Grundstück
+    const totalGrundstuecksflaeche = baufelder.reduce((s, bf) => s + bf.grundstuecksflaecheM2, 0);
+    let kg100: number;
+    if (grundstueckspreisMode === "total" && grundstueckspreisGesamt !== null) {
+      kg100 = grundstueckspreisGesamt;
+    } else if (grundstueckspreisMode === "sqm" && grundstueckspreisPerSqm !== null) {
+      kg100 = grundstueckspreisPerSqm * totalGrundstuecksflaeche;
+    } else {
+      kg100 = baufelder.reduce((sum, bf) => {
+        return sum + (bf.borisBodenrichtwert || 0) * bf.grundstuecksflaecheM2;
+      }, 0);
+    }
+    const effectivePerSqm = totalGrundstuecksflaeche > 0 ? kg100 / totalGrundstuecksflaeche : 0;
 
     // KG 200
     const kg200 = kg300 * (kg200Pct / 100);
@@ -620,8 +630,9 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
       gesamtlaufzeitMonate,
       grundstuecksanteil, baukostenProM2,
       monthlyCashflows, breakEvenMonth, peakCapital,
+      effectivePerSqm, totalGrundstuecksflaeche,
     };
-  }, [baufelder, placedUnits, buildings, kg200Pct, kg500Pct, kg700Pct, zinssatz, tilgung, bereitstellungszins, baustart, bauende, vertriebsstart, vertriebsende, auszahlungskurve, matchScore, kg100On, kg200On, kg300On, kg500On, kg700On, finanzierungAktiv, ekQuote, mietOverride, verkaufOverride, strategy]);
+  }, [baufelder, placedUnits, buildings, kg200Pct, kg500Pct, kg700Pct, zinssatz, tilgung, bereitstellungszins, baustart, bauende, vertriebsstart, vertriebsende, auszahlungskurve, matchScore, kg100On, kg200On, kg300On, kg500On, kg700On, finanzierungAktiv, ekQuote, mietOverride, verkaufOverride, strategy, grundstueckspreisPerSqm, grundstueckspreisGesamt, grundstueckspreisMode]);
 
   // Push calc data to parent
   useEffect(() => {
@@ -692,33 +703,60 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
       {/* ── Kostengruppen ────────────────────────────────── */}
       <Section title="Kosten" color="#F59E0B">
         <CostRow label="KG 100 · Grundstück" value={calc.kg100} enabled={kg100On} onToggle={setKg100On}>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-white/50 shrink-0">Preis €/m²:</span>
-              <input
-                type="number"
-                value={grundstueckspreis !== null ? grundstueckspreis : ""}
-                placeholder={baufelder.length > 0 ? `${(baufelder[0].borisBodenrichtwert || 0).toLocaleString("de-DE")} (BORIS)` : "BORIS"}
-                onChange={(e) => setGrundstueckspreis(e.target.value ? Number(e.target.value) : null)}
-                className="w-28 bg-white/10 border border-white/20 rounded px-2 py-0.5 text-[10px] text-white placeholder-white/30 focus:border-teal-500/50 focus:outline-none"
-              />
-              {grundstueckspreis !== null && (
-                <button onClick={() => setGrundstueckspreis(null)} className="text-[9px] text-white/30 hover:text-white/60">✕ Reset</button>
-              )}
+          <div className="space-y-2">
+            {/* Zwei editierbare Felder: €/m² und Gesamtpreis */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <div className="text-[9px] text-white/40 mb-0.5">€/m²</div>
+                <input
+                  type="number"
+                  value={grundstueckspreisMode === "sqm" && grundstueckspreisPerSqm !== null ? grundstueckspreisPerSqm : grundstueckspreisMode === "boris" ? "" : ""}
+                  placeholder={`${Math.round(calc.effectivePerSqm).toLocaleString("de-DE")}`}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setGrundstueckspreisPerSqm(Number(e.target.value));
+                      setGrundstueckspreisMode("sqm");
+                      setGrundstueckspreisGesamt(null);
+                    } else {
+                      setGrundstueckspreisPerSqm(null);
+                      setGrundstueckspreisMode("boris");
+                    }
+                  }}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-[11px] text-white placeholder-white/30 focus:border-teal-500/50 focus:outline-none"
+                />
+              </div>
+              <div>
+                <div className="text-[9px] text-white/40 mb-0.5">Kaufpreis gesamt</div>
+                <input
+                  type="number"
+                  value={grundstueckspreisMode === "total" && grundstueckspreisGesamt !== null ? grundstueckspreisGesamt : ""}
+                  placeholder={`${Math.round(calc.kg100).toLocaleString("de-DE")}`}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setGrundstueckspreisGesamt(Number(e.target.value));
+                      setGrundstueckspreisMode("total");
+                      setGrundstueckspreisPerSqm(null);
+                    } else {
+                      setGrundstueckspreisGesamt(null);
+                      setGrundstueckspreisMode("boris");
+                    }
+                  }}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-[11px] text-white placeholder-white/30 focus:border-teal-500/50 focus:outline-none"
+                />
+              </div>
             </div>
-            <div className="text-[10px] text-white/30">
-              {baufelder.map(bf => {
-                const priceUsed = grundstueckspreis !== null ? grundstueckspreis : (bf.borisBodenrichtwert || 0);
-                return (
-                  <div key={bf.id}>
-                    {bf.name}: {priceUsed.toLocaleString("de-DE")} €/m² × {bf.grundstuecksflaecheM2.toLocaleString("de-DE")} m²
-                    {grundstueckspreis === null && " (BORIS)"}
-                    {grundstueckspreis !== null && " (manuell)"}
-                  </div>
-                );
-              })}
-              {grundstueckspreis === null && baufelder.some(bf => !bf.borisBodenrichtwert) && (
-                <div className="text-amber-500/60">⚠ BORIS-Daten fehlen für einige Baufelder</div>
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-white/30">
+                {calc.totalGrundstuecksflaeche.toLocaleString("de-DE")} m² · {Math.round(calc.effectivePerSqm).toLocaleString("de-DE")} €/m²
+                {grundstueckspreisMode === "boris" ? " (BORIS)" : " (manuell)"}
+              </span>
+              {grundstueckspreisMode !== "boris" && (
+                <button
+                  onClick={() => { setGrundstueckspreisMode("boris"); setGrundstueckspreisPerSqm(null); setGrundstueckspreisGesamt(null); }}
+                  className="text-[9px] text-teal-400/60 hover:text-teal-400"
+                >
+                  ↺ BORIS
+                </button>
               )}
             </div>
           </div>
