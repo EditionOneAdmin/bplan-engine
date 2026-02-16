@@ -13,7 +13,7 @@ export default function Hero() {
             transition={{ duration: 0.7 }}
             className="text-4xl md:text-6xl font-extrabold text-primary leading-tight tracking-tight"
           >
-            Vom Flürstück zur Genehmigungsreife.
+            Vom Flürstück zur Machbarkeitsentscheidung.
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}

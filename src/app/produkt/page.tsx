@@ -161,7 +161,7 @@ function Hero() {
         </FadeIn>
         <FadeIn delay={0.2}>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-text/70 md:text-xl">
-            Von der Flurstücksnummer bis zum einreichungsfertigen Paket —
+            Von der Flurstücksnummer bis zum fundierten Machbarkeitsbewertung —
             U-Plan Engine verbindet vier spezialisierte Module zu einem
             durchgängigen, automatisierten Workflow.
           </p>
@@ -448,7 +448,7 @@ function Integration() {
     { icon: ScanLine, label: "SiteScan", desc: "Standort-Report", color: "bg-blue-500" },
     { icon: BookOpen, label: "RuleCompiler", desc: "Constraint-Set", color: "bg-amber-500" },
     { icon: Layers3, label: "PlanGen", desc: "Variantenvergleich", color: "bg-emerald-500" },
-    { icon: PackageCheck, label: "SubmitPack", desc: "Einreichungspaket", color: "bg-violet-500" },
+    { icon: PackageCheck, label: "SubmitPack", desc: "Dokumenten-Checkliste", color: "bg-violet-500" },
   ];
   return (
     <Section id="integration">
@@ -506,7 +506,7 @@ function CTA() {
           Erleben Sie die Pipeline in Aktion
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-lg text-slate-text/70">
-          Von der Adresse zum Einreichungspaket — in Minuten statt Wochen.
+          Von der Adresse zur Machbarkeitsbewertung — in Minuten statt Wochen.
           Vereinbaren Sie eine persönliche Demo.
         </p>
         <a
@@ -535,7 +535,7 @@ function Footer() {
           <span className="text-lg font-bold text-primary">U-Plan Engine</span>
         </div>
         <p className="text-sm text-slate-text/50">
-          Vom Flurstück zur Genehmigungsreife.
+          Vom Flurstück zur Machbarkeitsentscheidung.
         </p>
         <nav className="flex gap-6 text-sm text-slate-text/50">
           <a href="/uplan-engine/" className="transition hover:text-primary">Startseite</a>
@@ -624,15 +624,15 @@ export default function ProduktPage() {
           badge="Modul 4"
           badgeColor="bg-violet-100 text-violet-700"
           title="SubmitPack"
-          subtitle="Stellt das Einreichungspaket zusammen — kommune-spezifisch, vollständig geprüft, exportfertig."
+          subtitle="Erstellt eine strukturierte Dokumenten-Checkliste — kommune-spezifisch, mit Vollständigkeitsprüfung."
           features={[
             { icon: ClipboardList, text: "Automatische Dokumentenzusammenstellung nach kommunalen Anforderungen." },
             { icon: CheckCircle2, text: "Kommune-spezifische Checklisten mit Vollständigkeitsprüfung." },
             { icon: FileOutput, text: "Export in allen gängigen Formaten: PDF, IFC, BCF." },
-            { icon: Download, text: "Einreichungsfertiges Paket — bereit für die Bauaufsicht." },
+            { icon: Download, text: "Übersichtliche Checkliste — damit Sie wissen, was als Nächstes zu tun ist." },
           ]}
           input="Gewählte Variante"
-          output="Einreichungsfertiges Dokumentenpaket"
+          output="Dokumenten-Checkliste & Handlungsempfehlung"
           mockup={<SubmitPackMockup />}
           gray
         />

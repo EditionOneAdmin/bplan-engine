@@ -145,7 +145,7 @@ export default function ProductShowcase() {
             <div>
               <SubmitPackMockup />
               <h3 className="mt-4 text-lg font-bold text-primary">SubmitPack</h3>
-              <p className="mt-1 text-sm text-slate-text/60">Strukturierte Ordner, Checkliste je Kommune-Profil. Vollständig. Einreichungsfertig.</p>
+              <p className="mt-1 text-sm text-slate-text/60">Strukturierte Ordner, Checkliste je Kommune-Profil. Übersichtlich. Handlungsorientiert.</p>
             </div>
           </FadeIn>
         </div>

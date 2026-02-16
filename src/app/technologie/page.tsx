@@ -507,7 +507,7 @@ function Integrations() {
 const dataSources = [
   { icon: Map, name: "ALKIS / ALB", desc: "Katasterdaten — Flurstücke, Eigentümer, Nutzungsarten" },
   { icon: FileText, name: "XPlanung", desc: "B-Pläne digital — standardisierter Datenaustausch" },
-  { icon: Scale, name: "Landesbauordnungen", desc: "Alle 16 Bundesländer — automatisch aktualisiert" },
+  { icon: Scale, name: "Landesbauordnungen", desc: "Startregionen: Berlin & NRW — weitere Bundesländer folgen" },
   { icon: Building2, name: "Kommunale Satzungen", desc: "Lokale Festsetzungen & Gestaltungssatzungen" },
   { icon: Globe, name: "OpenStreetMap", desc: "Umfeldanalyse — Infrastruktur, ÖPNV, Nahversorgung" },
 ];

@@ -22,7 +22,7 @@ const steps = [
   {
     icon: PackageCheck,
     title: "SubmitPack",
-    desc: "Dokumentenpaket, Checklisten & Vollständigkeitsprüfung zusammenstellen.",
+    desc: "Dokumenten-Checkliste & Vollständigkeitsprüfung für die nächsten Schritte.",
   },
 ];
 
@@ -32,7 +32,7 @@ export default function HowItWorks() {
       <div className="max-w-7xl mx-auto">
         <FadeIn>
           <h2 className="text-3xl md:text-5xl font-bold text-primary text-center tracking-tight">
-            Vier Schritte zur Genehmigungsreife.
+            Vier Schritte zur Machbarkeitsprüfung.
           </h2>
         </FadeIn>
         <div className="mt-16 relative">

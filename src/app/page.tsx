@@ -118,7 +118,7 @@ function Hero() {
           <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-primary sm:text-5xl md:text-6xl lg:text-7xl">
             Vom Flürstück zur
             <br />
-            Genehmigungsreife.
+            Machbarkeitsentscheidung.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-text/70 md:text-xl">
             U-Plan Engine automatisiert die Machbarkeitsprüfung,
@@ -184,7 +184,7 @@ function Hero() {
 const problems = [
   {
     icon: Layers3,
-    stat: "16 Bundesländer",
+    stat: "2+ Regionen",
     highlight: "400+ Datenquellen",
     desc: "Flurstücke, B-Pläne, Bodenrichtwerte, Mietspiegel, Orthophotos — live auf einer Karte.",
   },
@@ -250,14 +250,14 @@ const steps = [
   {
     icon: PackageCheck,
     title: "SubmitPack",
-    desc: "Dokumentenpaket, Checklisten & Vollständigkeitsprüfung für die Einreichung.",
+    desc: "Dokumenten-Checkliste & Vollständigkeitsprüfung für die nächsten Schritte.",
   },
 ];
 
 function HowItWorks() {
   return (
     <Section id="pipeline">
-      <SectionHeading title="Vier Schritte zur Genehmigungsreife." />
+      <SectionHeading title="Vier Schritte zur Machbarkeitsprüfung." />
       <div className="grid gap-8 md:grid-cols-4">
         {steps.map((s, i) => (
           <FadeIn key={i} delay={i * 0.15} className="relative">
@@ -366,7 +366,7 @@ function ProductShowcase() {
             <div className="mb-6 flex items-center gap-3">
               <FolderOpen className="h-6 w-6 text-accent" />
               <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
-                Vollständig. Einreichungsfertig.
+                Vollständig geprüft. Checkliste erstellt.
               </span>
             </div>
             <h3 className="text-xl font-bold text-primary">SubmitPack</h3>
@@ -376,9 +376,9 @@ function ProductShowcase() {
             </p>
             <div className="mt-6 space-y-2">
               {[
-                "📁 Bauantragsformulare",
+                "📁 Erforderliche Unterlagen (Übersicht)",
                 "📁 Lageplan & Berechnungen",
-                "📁 Nachweise & Gutachten",
+                "📁 Empfohlene Nachweise",
               ].map((f, i) => (
                 <div
                   key={i}
@@ -530,11 +530,11 @@ function Technology() {
 const faqs = [
   {
     q: "Garantiert U-Plan Engine eine Baugenehmigung?",
-    a: "Nein. U-Plan Engine prüft systematisch die Übereinstimmung Ihres Vorhabens mit den geltenden planungsrechtlichen Vorgaben. Die finale Genehmigung erteilt die zuständige Behörde. Unser Ziel: maximale Vollständigkeit und minimale Nachforderungen.",
+    a: "Nein. U-Plan Engine prüft systematisch die Übereinstimmung Ihres Vorhabens mit den geltenden planungsrechtlichen Vorgaben. Die finale Genehmigung erteilt die zuständige Behörde. Unser Ziel: eine fundierte Entscheidungsgrundlage für Ihre Projektentwicklung.",
   },
   {
     q: "Wer trägt die Verantwortung für den Bauantrag?",
-    a: "Die Verantwortung bleibt beim Entwurfsverfasser und Bauherrn. U-Plan Engine ist ein Assistenzsystem, das die Qualität und Vollständigkeit der Unterlagen systematisch sicherstellt.",
+    a: "Die Verantwortung bleibt beim Entwurfsverfasser und Bauherrn. U-Plan Engine ist ein Assistenzsystem, das die Machbarkeitsprüfung und Variantenanalyse systematisch unterstützt.",
   },
   {
     q: "Wie funktioniert der Rollout neuer Kommunen?",
@@ -542,7 +542,7 @@ const faqs = [
   },
   {
     q: "Welche Outputs liefert die Plattform?",
-    a: "Variantenvergleiche, Compliance Reports mit Ampel-System, vollständige Einreichungspakete (SubmitPack) sowie strukturierte Exporte in PDF, IFC und BCF.",
+    a: "Variantenvergleiche, Compliance Reports mit Ampel-System, strukturierte Dokumenten-Checklisten (SubmitPack) sowie strukturierte Exporte in PDF, IFC und BCF.",
   },
   {
     q: "Wie integriert sich U-Plan Engine in bestehende Prozesse?",
@@ -652,7 +652,7 @@ function Footer() {
           <span className="text-lg font-bold text-primary">U-Plan Engine</span>
         </div>
         <p className="text-sm text-slate-text/50">
-          Vom Flürstück zur Genehmigungsreife.
+          Vom Flurstück zur Machbarkeitsentscheidung.
         </p>
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-slate-text/50">
           <a href="/uplan-engine/produkt" className="transition hover:text-primary">Produkt</a>
