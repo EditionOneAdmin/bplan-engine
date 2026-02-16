@@ -188,10 +188,19 @@ function KPICard({ label, value, unit, color }: { label: string; value: string; 
 function CashflowChart({
   cashflows,
   breakEvenMonth,
+  planungStart,
+  planungEnde,
+  baustart,
+  bauende,
 }: {
   cashflows: { month: number; cashOut: number; cashIn: number; cumulative: number }[];
   breakEvenMonth: number | null;
+  planungStart: number;
+  planungEnde: number;
+  baustart: number;
+  bauende: number;
 }) {
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   if (cashflows.length === 0) return null;
 
   const W = 600;
@@ -230,19 +239,56 @@ function CashflowChart({
         const x = PAD_L + i * gap + (gap - barW) * 0.5;
         const outH = (Math.abs(c.cashOut) / maxVal) * (chartH * 0.45);
         const inH = (c.cashIn / maxVal) * (chartH * 0.45);
+        const isHovered = hoverIdx === i;
         return (
           <g key={i}>
+            {/* Hover area (invisible, full height) */}
+            <rect
+              x={PAD_L + i * gap} y={PAD_T} width={gap} height={chartH}
+              fill="transparent"
+              onMouseEnter={() => setHoverIdx(i)}
+              onMouseLeave={() => setHoverIdx(null)}
+              style={{ cursor: "crosshair" }}
+            />
             {/* Expense bar (down) */}
             {c.cashOut !== 0 && (
-              <rect x={x} y={midY} width={barW} height={outH} fill="#EF4444" opacity={0.6} rx={1} />
+              <rect x={x} y={midY} width={barW} height={outH} fill="#EF4444" opacity={isHovered ? 0.9 : 0.6} rx={1} />
             )}
             {/* Income bar (up) */}
             {c.cashIn > 0 && (
-              <rect x={x} y={midY - inH} width={barW} height={inH} fill="#22C55E" opacity={0.6} rx={1} />
+              <rect x={x} y={midY - inH} width={barW} height={inH} fill="#22C55E" opacity={isHovered ? 0.9 : 0.6} rx={1} />
             )}
           </g>
         );
       })}
+
+      {/* Hover Tooltip */}
+      {hoverIdx !== null && (() => {
+        const c = cashflows[hoverIdx];
+        const x = Math.min(Math.max(PAD_L + hoverIdx * gap + gap * 0.5, 100), W - 120);
+        const m = c.month;
+        const phase = m >= planungStart && m < planungEnde ? "Planung" : m >= baustart && m < bauende ? "Bau" : "Vertrieb";
+        return (
+          <g>
+            {/* Vertical line */}
+            <line x1={PAD_L + hoverIdx * gap + gap * 0.5} y1={PAD_T} x2={PAD_L + hoverIdx * gap + gap * 0.5} y2={H - PAD_B} stroke="white" strokeOpacity={0.3} strokeWidth={0.5} strokeDasharray="2 2" />
+            {/* Tooltip bg */}
+            <rect x={x - 80} y={4} width={160} height={52} rx={4} fill="#0F172A" stroke="white" strokeOpacity={0.2} strokeWidth={0.5} />
+            <text x={x} y={16} textAnchor="middle" fill="white" fontSize={8} fontWeight="bold">
+              Monat {m} · {phase}
+            </text>
+            <text x={x - 72} y={28} fill="#EF4444" fontSize={7}>
+              Ausgaben: {Math.round(c.cashOut).toLocaleString("de-DE")} €
+            </text>
+            <text x={x - 72} y={38} fill="#22C55E" fontSize={7}>
+              Einnahmen: {Math.round(c.cashIn).toLocaleString("de-DE")} €
+            </text>
+            <text x={x - 72} y={48} fill="#94A3B8" fontSize={7}>
+              Kumuliert: {Math.round(c.cumulative).toLocaleString("de-DE")} €
+            </text>
+          </g>
+        );
+      })()}
 
       {/* Cumulative line */}
       <polyline points={cumPoints} fill="none" stroke="#94A3B8" strokeWidth={1.5} strokeDasharray="4 2" opacity={0.7} />
@@ -1074,7 +1120,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
         {/* Cashflow Chart */}
         <div className="mt-3 border border-white/5 rounded-lg overflow-hidden">
-          <CashflowChart cashflows={calc.monthlyCashflows} breakEvenMonth={calc.breakEvenMonth} />
+          <CashflowChart cashflows={calc.monthlyCashflows} breakEvenMonth={calc.breakEvenMonth} planungStart={planungStart} planungEnde={planungEnde} baustart={baustart} bauende={bauende} />
           <div className="flex justify-between px-2 pb-1.5">
             <span className="text-[9px] text-red-400/60">■ Ausgaben</span>
             <span className="text-[9px] text-white/30">┅ Kumuliert</span>
