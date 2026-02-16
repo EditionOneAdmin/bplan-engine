@@ -420,6 +420,11 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
   const [strategy, setStrategy] = useState<"hold" | "sell">(filters.strategy);
   const [mietOverride, setMietOverride] = useState<number | null>(null);
   const [verkaufOverride, setVerkaufOverride] = useState<number | null>(null);
+
+  // Hold-spezifisch
+  const [betrachtungJahre, setBetrachtungJahre] = useState(20);
+  const [bewirtschaftungPct, setBewirtschaftungPct] = useState(18);
+  const [mietsteigerungPa, setMietsteigerungPa] = useState(1.5);
   const [grundstueckspreisPerSqm, setGrundstueckspreisPerSqm] = useState<number | null>(null);
   const [grundstueckspreisGesamt, setGrundstueckspreisGesamt] = useState<number | null>(null);
   const [grundstueckspreisMode, setGrundstueckspreisMode] = useState<"boris" | "sqm" | "total">("boris");
@@ -557,12 +562,17 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
     const verkaufserloes = verkaufProM2 * totalWohnflaeche;
 
     // Gesamtlaufzeit
-    const gesamtlaufzeitMonate = Math.max(bauende, vertriebsende);
+    const gesamtlaufzeitMonate = strategy === "hold"
+      ? Math.max(bauende, vertriebsende, planungStart + betrachtungJahre * 12)
+      : Math.max(bauende, vertriebsende);
 
     // Planungshonorare: 60% von KG700 in Planungsphase, 40% in Bauphase
     const planungsDauer = Math.max(1, planungEnde - planungStart);
     const kg700Planung = kg700 * 0.6;
     const kg700Bau = kg700 * 0.4;
+
+    // Bewirtschaftungskosten (Hold)
+    const bewirtschaftungMonatlich = jahresmiete * (bewirtschaftungPct / 100) / 12;
 
     // ── Monthly Cashflows ──
     const totalMonths = gesamtlaufzeitMonate;
@@ -581,6 +591,10 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
       weights.push(w);
       weightSum += w;
     }
+
+    // Restschuld-Tracking (Hold)
+    let restschuld = fkVolumen;
+    const restschuldVerlauf: number[] = [];
 
     let cumulative = 0;
     for (let m = 0; m < totalMonths; m++) {
@@ -605,15 +619,31 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         cashOut += finKostenMonatlich;
       }
 
-      // Income
       if (strategy === "hold") {
-        // Linear ramp from vertriebsstart to vertriebsende (0%→100% occupancy)
+        // Mietsteigerung: jährlich ab Vertriebsende
+        const yearsAfterStart = m >= vertriebsende ? Math.floor((m - vertriebsende) / 12) : 0;
+        const steigerungsFaktor = Math.pow(1 + mietsteigerungPa / 100, yearsAfterStart);
+        const aktuelleMieteMonat = (jahresmiete / 12) * steigerungsFaktor;
+
+        // Vermietungsphase: lineare Vermietung
         if (m >= vertriebsstart && m < vertriebsende) {
           const vertriebsDauer = Math.max(1, vertriebsende - vertriebsstart);
           const progress = (m - vertriebsstart + 1) / vertriebsDauer;
-          cashIn += (jahresmiete / 12) * progress;
+          cashIn += aktuelleMieteMonat * progress;
+          // Bewirtschaftung proportional zur Belegung
+          cashOut += bewirtschaftungMonatlich * progress * steigerungsFaktor;
         } else if (m >= vertriebsende) {
-          cashIn += jahresmiete / 12;
+          cashIn += aktuelleMieteMonat;
+          cashOut += bewirtschaftungMonatlich * steigerungsFaktor;
+        }
+
+        // Laufende Annuität ab Bauende (Kredit läuft weiter!)
+        if (finanzierungAktiv && m >= bauende && restschuld > 0) {
+          const monatszins = zinssatz / 100 / 12;
+          const zinsanteil = restschuld * monatszins;
+          const tilgungsanteil = Math.min(monatlicheRate - zinsanteil, restschuld);
+          cashOut += monatlicheRate;
+          restschuld = Math.max(0, restschuld - tilgungsanteil);
         }
       } else {
         // Sell: sigmoid distribution over vertriebsstart..vertriebsende
@@ -621,7 +651,6 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
           const vertriebsDauer = Math.max(1, vertriebsende - vertriebsstart);
           const t = vertriebsDauer > 1 ? (m - vertriebsstart) / (vertriebsDauer - 1) : 0.5;
           const w = betaCurve(t, 2, 2);
-          // We need normalized weights for sell distribution
           let sellWeightSum = 0;
           for (let sm = vertriebsstart; sm < vertriebsende; sm++) {
             const st = vertriebsDauer > 1 ? (sm - vertriebsstart) / (vertriebsDauer - 1) : 0.5;
@@ -631,6 +660,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         }
       }
 
+      restschuldVerlauf.push(restschuld);
       cumulative += cashIn - cashOut;
       monthlyCashflows.push({ month: m, cashOut, cashIn, cumulative });
     }
@@ -645,39 +675,46 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
       }
     }
 
-    // KPIs
-    const niy = gesamtkosten > 0 ? (jahresmiete / gesamtkosten) * 100 : 0;
-    const marge = gesamtkosten > 0 ? ((verkaufserloes - gesamtkosten) / gesamtkosten) * 100 : 0;
+    // Restschuld am Ende
+    const restschuldEnde = restschuldVerlauf.length > 0 ? restschuldVerlauf[restschuldVerlauf.length - 1] : fkVolumen;
+    const equityBuildup = fkVolumen - restschuldEnde;
+
+    // ── KPIs ──
+
+    // Hold KPIs
+    const nettomieteJahr = jahresmiete * (1 - bewirtschaftungPct / 100);
+    const niy = sumKG > 0 ? (nettomieteJahr / sumKG) * 100 : 0; // NIY auf Investitionskosten (ohne Finanzierung)
 
     const coc = finanzierungAktiv && ekBedarf > 0
-      ? ((jahresmiete - annuitaetJahr) / ekBedarf) * 100
+      ? ((nettomieteJahr - annuitaetJahr) / ekBedarf) * 100
+      : (ekBedarf > 0 ? (nettomieteJahr / ekBedarf) * 100 : null);
+
+    const dscr = finanzierungAktiv && annuitaetJahr > 0
+      ? nettomieteJahr / annuitaetJahr
       : null;
+
+    const irrHold = (() => {
+      if (sumKG <= 0) return 0;
+      return (nettomieteJahr / sumKG) * 100;
+    })();
+
+    // Sell KPIs
+    const marge = gesamtkosten > 0 ? ((verkaufserloes - gesamtkosten) / gesamtkosten) * 100 : 0;
 
     const ekRenditeSell = finanzierungAktiv && ekBedarf > 0
       ? ((verkaufserloes - gesamtkosten) / ekBedarf) * 100
       : null;
 
     const irrSell = (() => {
+      const sellLaufzeit = Math.max(bauende, vertriebsende);
       if (finanzierungAktiv && ekRenditeSell !== null) {
-        if (gesamtlaufzeitMonate <= 0) return 0;
-        return (Math.pow(1 + ekRenditeSell / 100, 12 / gesamtlaufzeitMonate) - 1) * 100;
+        if (sellLaufzeit <= 0) return 0;
+        return (Math.pow(1 + ekRenditeSell / 100, 12 / sellLaufzeit) - 1) * 100;
       }
-      const totalM = bauzeit + 6;
-      const years = totalM / 12;
+      const years = sellLaufzeit / 12;
       if (years <= 0 || gesamtkosten <= 0) return 0;
       return (Math.pow(1 + marge / 100, 1 / years) - 1) * 100;
     })();
-
-    const irrHold = (() => {
-      if (gesamtkosten <= 0) return 0;
-      const vacancyMonths = bauzeit;
-      const firstYearRent = jahresmiete * ((12 - Math.min(vacancyMonths, 12)) / 12);
-      return (firstYearRent / gesamtkosten) * 100;
-    })();
-
-    const dscr = finanzierungAktiv && annuitaetJahr > 0
-      ? jahresmiete / annuitaetJahr
-      : null;
 
     const grundstuecksanteil = gesamtkosten > 0 ? (kg100 / gesamtkosten) * 100 : 0;
     const baukostenProM2 = totalBGF > 0 ? kg300 / totalBGF : 0;
@@ -696,8 +733,9 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
       grundstuecksanteil, baukostenProM2,
       monthlyCashflows, breakEvenMonth, peakCapital,
       effectivePerSqm, totalGrundstuecksflaeche,
+      restschuldEnde, equityBuildup, nettomieteJahr,
     };
-  }, [baufelder, placedUnits, buildings, kg200Pct, kg500Pct, kg700Pct, zinssatz, tilgung, bereitstellungszins, planungStart, planungEnde, baustart, bauende, vertriebsstart, vertriebsende, auszahlungskurve, matchScore, kg100On, kg200On, kg300On, kg500On, kg700On, finanzierungAktiv, ekQuote, mietOverride, verkaufOverride, strategy, grundstueckspreisPerSqm, grundstueckspreisGesamt, grundstueckspreisMode]);
+  }, [baufelder, placedUnits, buildings, kg200Pct, kg500Pct, kg700Pct, zinssatz, tilgung, bereitstellungszins, planungStart, planungEnde, baustart, bauende, vertriebsstart, vertriebsende, auszahlungskurve, matchScore, kg100On, kg200On, kg300On, kg500On, kg700On, finanzierungAktiv, ekQuote, mietOverride, verkaufOverride, strategy, grundstueckspreisPerSqm, grundstueckspreisGesamt, grundstueckspreisMode, betrachtungJahre, bewirtschaftungPct, mietsteigerungPa]);
 
   // Push calc data to parent
   useEffect(() => {
@@ -1115,7 +1153,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
         {/* Summary */}
         <div className="text-[10px] text-white/40 mt-2">
-          Bauzeit {calc.bauzeit} Mo. · Vertrieb {vertriebsDauer} Mo. · Gesamt {calc.gesamtlaufzeitMonate} Mo.
+          Bauzeit {calc.bauzeit} Mo. · {strategy === "hold" ? `Betrachtung ${betrachtungJahre} J.` : `Vertrieb ${vertriebsDauer} Mo.`} · Gesamt {calc.gesamtlaufzeitMonate} Mo.
         </div>
 
         {/* Cashflow Chart */}
@@ -1129,39 +1167,74 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         </div>
       </Section>
 
-      {/* ── Erlöse ───────────────────────────────────────── */}
-      <Section title="Erlöse" color="#22C55E">
-        <div className="flex rounded-lg overflow-hidden border border-white/10 mb-3">
-          {(["hold", "sell"] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => setStrategy(s)}
-              className={`flex-1 text-xs py-1.5 transition-colors ${
-                strategy === s ? "bg-teal-600 text-white" : "bg-white/5 text-white/40 hover:bg-white/10"
-              }`}
-            >
-              {s === "hold" ? "🏠 Hold / Miete" : "💰 Sell / Verkauf"}
-            </button>
-          ))}
-        </div>
+      {/* ── Strategie-Tabs ─────────────────────────────── */}
+      <div className="flex rounded-lg overflow-hidden border border-white/10 mb-2">
+        {(["hold", "sell"] as const).map(s => (
+          <button
+            key={s}
+            onClick={() => setStrategy(s)}
+            className={`flex-1 text-xs py-2 font-semibold transition-colors ${
+              strategy === s ? "bg-teal-600 text-white" : "bg-white/5 text-white/40 hover:bg-white/10"
+            }`}
+          >
+            {s === "hold" ? "🏠 Hold / Miete" : "💰 Sell / Verkauf"}
+          </button>
+        ))}
+      </div>
 
+      {/* ── Erlöse ───────────────────────────────────────── */}
+      <Section title={strategy === "hold" ? "Mieteinnahmen" : "Verkaufserlöse"} color="#22C55E">
         {strategy === "hold" ? (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-white/70">Miete €/m² WF/Monat</span>
+              <span className="text-xs text-white/70">Miete €/m² WF/Mo.</span>
               <NumInput
                 value={mietOverride ?? calc.defaultMiete}
                 onChange={(v) => setMietOverride(v)}
-                suffix="€/m² WF"
+                suffix="€/m²"
                 step={0.5}
               />
             </div>
-            <div className="text-[10px] text-white/30">
-              Default: Mietspiegel {baufelder[0]?.wohnlage || "mittel"} · 60-90m² · Mittelwert
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-white/70">Mietsteigerung p.a.</span>
+              <NumInput value={mietsteigerungPa} onChange={setMietsteigerungPa} suffix="%" step={0.5} />
             </div>
-            <div className="flex justify-between items-center pt-2 border-t border-white/10">
-              <span className="text-xs text-green-400 font-semibold">Jahresmiete</span>
-              <span className="text-sm font-bold text-green-400">{fmtEur(calc.jahresmiete)}</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-white/70">Bewirtschaftung</span>
+              <NumInput value={bewirtschaftungPct} onChange={setBewirtschaftungPct} suffix="%" step={1} />
+            </div>
+            <div className="text-[10px] text-white/30">
+              Bewirtschaftung: Verwaltung, Instandhaltung, Leerstandsrisiko
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-white/70">Betrachtungszeitraum</span>
+              <div className="flex gap-1">
+                {[10, 15, 20, 30].map(y => (
+                  <button
+                    key={y}
+                    onClick={() => setBetrachtungJahre(y)}
+                    className={`px-2 py-0.5 text-[10px] rounded ${
+                      betrachtungJahre === y ? "bg-teal-600 text-white" : "bg-white/5 text-white/40 hover:bg-white/10"
+                    }`}
+                  >
+                    {y}J
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1 pt-2 border-t border-white/10">
+              <div className="flex justify-between">
+                <span className="text-xs text-white/50">Bruttomiete/Jahr</span>
+                <span className="text-xs text-white/70">{fmtEur(calc.jahresmiete)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-white/50">– Bewirtschaftung ({bewirtschaftungPct}%)</span>
+                <span className="text-xs text-red-400/70">−{fmtEur(calc.jahresmiete * bewirtschaftungPct / 100)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-green-400 font-semibold">Nettomiete/Jahr</span>
+                <span className="text-sm font-bold text-green-400">{fmtEur(calc.nettomieteJahr)}</span>
+              </div>
             </div>
           </div>
         ) : (
@@ -1191,8 +1264,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         <div className="grid grid-cols-2 gap-2">
           {strategy === "hold" ? (
             <>
-              <KPICard label="Net Initial Yield" value={fmtPct(calc.niy)} color="#0D9488" />
-              <KPICard label="IRR (adj.)" value={fmtPct(calc.irrHold)} color="#0D9488" />
+              <KPICard label="Nettoanfangsrendite" value={fmtPct(calc.niy)} color="#0D9488" />
               {finanzierungAktiv && calc.coc !== null && (
                 <KPICard
                   label="Cash-on-Cash"
@@ -1208,6 +1280,19 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
                   color={calc.dscr > 1.3 ? "#22C55E" : calc.dscr >= 1.0 ? "#FBBF24" : "#EF4444"}
                 />
               )}
+              {finanzierungAktiv && (
+                <>
+                  <KPICard label="Restschuld" value={fmtEur(calc.restschuldEnde)} color="#F59E0B" />
+                  <KPICard label="Equity Build-up" value={fmtEur(calc.equityBuildup)} color="#22C55E" />
+                </>
+              )}
+              <KPICard label="Monatl. Rate" value={fmtEur(calc.monatlicheRate)} color="#F59E0B" />
+              <KPICard label="Nettomiete/Mo." value={fmtEur(calc.nettomieteJahr / 12)} color="#22C55E" />
+              <KPICard
+                label="Netto nach Rate"
+                value={fmtEur(calc.nettomieteJahr / 12 - calc.monatlicheRate)}
+                color={(calc.nettomieteJahr / 12 - calc.monatlicheRate) > 0 ? "#22C55E" : "#EF4444"}
+              />
             </>
           ) : (
             <>
@@ -1226,8 +1311,8 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
           <KPICard label="Max. Kapitalbedarf" value={fmtEur(Math.abs(calc.peakCapital))} color="#EF4444" />
           <KPICard label="Grundstücksanteil" value={fmtPct(calc.grundstuecksanteil)} color="#FBBF24" />
           <KPICard label="Baukosten/m²" value={`${Math.round(calc.baukostenProM2).toLocaleString("de-DE")}`} unit=" €" color="#A78BFA" />
-          <KPICard label="Gesamtlaufzeit" value={`${calc.gesamtlaufzeitMonate}`} unit=" Mo." color="#94A3B8" />
-          {finanzierungAktiv && (
+          <KPICard label="Betrachtung" value={strategy === "hold" ? `${betrachtungJahre * 12}` : `${calc.gesamtlaufzeitMonate}`} unit=" Mo." color="#94A3B8" />
+          {finanzierungAktiv && strategy === "sell" && (
             <KPICard label="Monatl. Rate" value={fmtEur(calc.monatlicheRate)} color="#F59E0B" />
           )}
         </div>
