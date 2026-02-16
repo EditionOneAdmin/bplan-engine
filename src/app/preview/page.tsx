@@ -247,7 +247,7 @@ const steps = [
   {
     icon: PackageCheck,
     title: "SubmitPack",
-    desc: "Dokumentenpaket, Checklisten & Vollständigkeitsprüfung für die Einreichung.",
+    desc: "Dokumenten-Checkliste & Vollständigkeitsprüfung für die nächsten Schritte.",
   },
 ];
 
@@ -375,7 +375,7 @@ function ProductShowcase() {
               {[
                 "📁 Erforderliche Unterlagen (Übersicht)",
                 "📁 Lageplan & Berechnungen",
-                "📁 Nachweise & Gutachten",
+                "📁 Empfohlene Nachweise",
               ].map((f, i) => (
                 <div
                   key={i}
