@@ -188,8 +188,8 @@ function Hero() {
 const problems = [
   {
     icon: Layers3,
-    stat: "2+ Regionen",
-    highlight: "400+ Datenquellen",
+    stat: "2 Bundesländer",
+    highlight: "NRW & Berlin",
     desc: "Flurstücke, B-Pläne, Bodenrichtwerte, Mietspiegel, Orthophotos — live auf einer Karte.",
   },
   {
