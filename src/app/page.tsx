@@ -190,7 +190,7 @@ const problems = [
     icon: Layers3,
     stat: "2 Bundesländer",
     highlight: "NRW & Berlin",
-    desc: "Flurstücke, B-Pläne, Bodenrichtwerte, Mietspiegel, Orthophotos — live auf einer Karte.",
+    desc: "Flurstücke, B-Pläne, Bodenrichtwerte, Mietspiegel, Satellitenbilder — live auf einer Karte.",
   },
   {
     icon: Clock,
