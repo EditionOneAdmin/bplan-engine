@@ -144,10 +144,10 @@ function Hero() {
             Interaktive Demo <ArrowRight className="h-4 w-4" />
           </a>
           <a
-            href="#kontakt"
+            href="/uplan-engine/pipeline"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-border px-8 py-4 text-base font-semibold text-primary transition hover:border-primary/30 hover:bg-gray-bg"
           >
-            Demo anfragen
+            Projekt Pipeline
           </a>
         </motion.div>
 

@@ -109,6 +109,12 @@ export function BottomBar({ metrics, drawing, onToggleDraw, matchScore, onExport
       {(onExport || onAddToProject) && (
         <>
           <div className="flex-1" />
+          <a
+            href="/uplan-engine/pipeline"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/40"
+          >
+            📋 Projekt Pipeline
+          </a>
           {onAddToProject && (
             <button
               onClick={onAddToProject}
