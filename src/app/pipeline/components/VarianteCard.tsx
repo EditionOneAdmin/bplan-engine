@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, Trash2, MapPin } from "lucide-react";
+import { Star, Trash2, MapPin, ExternalLink } from "lucide-react";
 import type { Variante } from "@/types/pipeline";
 
 interface Props {

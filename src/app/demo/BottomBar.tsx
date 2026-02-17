@@ -52,7 +52,7 @@ function MiniScoreRing({ score }: { score: number }) {
   );
 }
 
-export function BottomBar({ metrics, drawing, onToggleDraw, matchScore, onExport }: { metrics: Metrics; drawing?: boolean; onToggleDraw?: () => void; matchScore?: number; onExport?: () => void }) {
+export function BottomBar({ metrics, drawing, onToggleDraw, matchScore, onExport, onAddToProject }: { metrics: Metrics; drawing?: boolean; onToggleDraw?: () => void; matchScore?: number; onExport?: () => void; onAddToProject?: () => void }) {
   return (
     <div className="bg-[#1E293B] border-t border-white/10 px-4 py-3 flex items-center gap-6 overflow-x-auto shrink-0">
       {onToggleDraw && (
@@ -106,15 +106,25 @@ export function BottomBar({ metrics, drawing, onToggleDraw, matchScore, onExport
           </div>
         </>
       )}
-      {onExport && (
+      {(onExport || onAddToProject) && (
         <>
           <div className="flex-1" />
-          <button
-            onClick={onExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/40"
-          >
-            📄 Export Projektplan
-          </button>
+          {onAddToProject && (
+            <button
+              onClick={onAddToProject}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap bg-teal-600/20 border border-teal-500/30 text-teal-400 hover:bg-teal-600/30 hover:text-teal-300"
+            >
+              📂 Zu Projekt hinzufügen
+            </button>
+          )}
+          {onExport && (
+            <button
+              onClick={onExport}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/40"
+            >
+              📄 Export Projektplan
+            </button>
+          )}
         </>
       )}
     </div>

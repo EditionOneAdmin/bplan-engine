@@ -10,6 +10,7 @@ import { DemoHeader } from "./DemoHeader";
 import { CostCalculator } from "./CostCalculator";
 import { ExportModal } from "./ExportModal";
 import type { ExportConfig } from "./ExportModal";
+import { AddToProjectModal } from "./AddToProjectModal";
 import type { Baufeld, PlacedUnit, Filters, Manufacturer, BuildingShape, RoofType, FacadeType } from "./types";
 import { BUILDINGS } from "./data";
 import { getBuildings } from "./catalogData";
@@ -60,6 +61,8 @@ export default function DemoApp() {
   const [exporting, setExporting] = useState(false);
   // Cost data from CostCalculator
   const [costData, setCostData] = useState<CostData | undefined>(undefined);
+  // Add to project modal
+  const [showAddToProject, setShowAddToProject] = useState(false);
 
   const handlePlace = useCallback(() => {
     setPlaceMode(true);
@@ -392,6 +395,7 @@ export default function DemoApp() {
         drawing={drawing}
         onToggleDraw={() => setDrawing((d) => !d)}
         onExport={handleOpenExport}
+        onAddToProject={() => setShowAddToProject(true)}
         matchScore={
           selectedBuilding && activeBaufeld
             ? calculateMatch(
@@ -402,6 +406,16 @@ export default function DemoApp() {
               ).score
             : undefined
         }
+      />
+      <AddToProjectModal
+        open={showAddToProject}
+        onClose={() => setShowAddToProject(false)}
+        selectedRegion={selectedRegion}
+        baufelder={baufelder}
+        placedUnits={placedUnits}
+        costData={costData}
+        filters={filters}
+        metrics={metrics}
       />
       <ExportModal
         open={showExportModal}

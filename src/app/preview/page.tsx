@@ -823,7 +823,7 @@ function Nav() {
 
           <a href="/uplan-engine/partner" className="transition hover:text-primary">Partner</a>
           <a href="/uplan-engine/technologie" className="transition hover:text-primary">Technologie</a>
-          <a href="/uplan-engine/partner" className="transition hover:text-primary">Partner werden</a>
+          <a href="/uplan-engine/pipeline" className="transition hover:text-primary">Pipeline</a>
           <a href="#faq" className="transition hover:text-primary">FAQ</a>
         </nav>
 
@@ -862,7 +862,7 @@ function Nav() {
               ))}
               <a href="/uplan-engine/technologie" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>Technologie</a>
               <a href="/uplan-engine/partner" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>Partner werden</a>
-              <a href="/uplan-engine/partner" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>Partner werden</a>
+              <a href="/uplan-engine/pipeline" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>Pipeline</a>
               <a href="#faq" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>FAQ</a>
               <a href="/uplan-engine/demo" className="mt-2 rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-accent-light transition" onClick={() => setMobileOpen(false)}>Interaktive Demo</a>
             </nav>
