@@ -156,7 +156,12 @@ function StatusSelector({ value, onChange }: { value: string; onChange: (v: Proj
 export default function ProjectDetailClient() {
   const router = useRouter();
   const params = useParams();
-  const projectId = params.id as string;
+  // Fallback: extract ID from URL path for GitHub Pages SPA routing via 404.html
+  const projectId = (params.id && params.id !== "placeholder"
+    ? params.id
+    : typeof window !== "undefined"
+      ? window.location.pathname.replace(/\/uplan-engine\/pipeline\//, "").replace(/\/$/, "")
+      : "placeholder") as string;
 
   const [project, setProject] = useState<Project | null>(null);
   const [baufelder, setBaufelder] = useState<Baufeld[]>([]);
