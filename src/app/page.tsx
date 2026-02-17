@@ -337,7 +337,7 @@ function USPSection() {
 const pipelineFeatures = [
   { icon: LayoutGrid, title: "Portfolio-Analyse", desc: "Vom Einzelgrundstück zur Gesamtbewertung. Alle Standorte auf einen Blick." },
   { icon: BarChart3, title: "Automatisches Ranking", desc: "Sortiert nach Score — die besten Grundstücke sofort identifiziert." },
-  { icon: Timer, title: "Parallele Bewertung", desc: "Was einzeln Wochen dauert, erledigen Sie für Ihr gesamtes Portfolio in Minuten." },
+  { icon: Timer, title: "Parallele Bewertung", desc: "Was einzeln Wochen dauert, erledigen Sie für Ihr gesamtes Portfolio in kürzester Zeit." },
 ];
 
 function PipelineSection() {
