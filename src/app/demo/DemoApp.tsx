@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { BuildingCatalog } from "./BuildingCatalog";
 import { BuildingSteckbrief } from "./BuildingSteckbrief";
@@ -18,6 +18,7 @@ import { calculateMatch } from "./matchScore";
 import { exportProjectPlan } from "./exportPDF";
 import type { CostData } from "./exportPDF";
 import { regions, defaultRegionId } from "../../config/regions";
+import { supabase } from "@/lib/supabase";
 
 const MapPanel = dynamic(() => import("./MapPanel"), { ssr: false });
 
@@ -272,6 +273,57 @@ export default function DemoApp() {
     setShowExportModal(true);
   }, []);
 
+  // DEEP LINK SUPPORT — load variante from URL params
+  const [deepLinkToast, setDeepLinkToast] = useState<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const varianteId = params.get("loadVariante");
+    if (!varianteId) return;
+
+    (async () => {
+      try {
+        const { data: variante, error } = await supabase
+          .from("varianten")
+          .select("*")
+          .eq("id", varianteId)
+          .single();
+        if (error || !variante) return;
+
+        // Restore bauplan_config → region, baufelder
+        const bc = variante.bauplan_config as Record<string, unknown> | null;
+        if (bc?.region && typeof bc.region === "string") {
+          const regionKey = Object.keys(regions).find(k => k === bc.region);
+          if (regionKey) setSelectedRegion(regionKey);
+        }
+        if (bc?.baufelder && Array.isArray(bc.baufelder)) {
+          setBaufelder(bc.baufelder as Baufeld[]);
+        }
+
+        // Restore gebaeude_config → placedUnits
+        const gc = variante.gebaeude_config as Record<string, unknown> | null;
+        if (gc?.placedUnits && Array.isArray(gc.placedUnits)) {
+          setPlacedUnits(gc.placedUnits as PlacedUnit[]);
+        }
+
+        // Restore wirtschaftlichkeit → costData, filters
+        const w = variante.wirtschaftlichkeit as Record<string, unknown> | null;
+        if (w?.filters) {
+          setFilters(w.filters as Filters);
+        }
+        if (w?.costData) {
+          setCostData(w.costData as CostData);
+        }
+
+        setDeepLinkToast(`Variante "${variante.name}" geladen`);
+        // Clean URL
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch {
+        // silently fail
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // END DEEP LINK SUPPORT
+
   const handleExport = useCallback(async (exportConfig: ExportConfig) => {
     setExporting(true);
     try {
@@ -440,6 +492,14 @@ export default function DemoApp() {
           />
         );
       })()}
+      {/* DEEP LINK TOAST */}
+      {deepLinkToast && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-xl bg-teal-500 px-5 py-3 text-sm font-medium text-white shadow-lg animate-pulse"
+          onAnimationEnd={() => setTimeout(() => setDeepLinkToast(null), 3000)}
+        >
+          {deepLinkToast}
+        </div>
+      )}
     </div>
   );
 }

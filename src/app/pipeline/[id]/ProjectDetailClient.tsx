@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRouter, useParams } from "next/navigation";
 import {
-  ArrowLeft, Plus, ChevronDown, Menu, X, ChevronRight, Check,
+  ArrowLeft, Plus, ChevronDown, Menu, X, ChevronRight, Check, FileOutput,
 } from "lucide-react";
 import {
   getProject, updateProject,
@@ -167,6 +167,7 @@ export default function ProjectDetailClient() {
   const [toast, setToast] = useState<string | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState("");
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -325,7 +326,15 @@ export default function ProjectDetailClient() {
                   )}
                   {project.description && <p className="mt-1 text-sm text-slate-text/60">{project.description}</p>}
                 </div>
-                <StatusSelector value={project.status} onChange={handleStatusChange} />
+                <div className="flex items-center gap-2">
+                  <StatusSelector value={project.status} onChange={handleStatusChange} />
+                  <button
+                    onClick={() => setShowExportModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-border px-3 py-1 text-xs font-medium text-slate-text/60 hover:bg-gray-bg transition"
+                  >
+                    <FileOutput className="h-3.5 w-3.5" /> Exportieren
+                  </button>
+                </div>
               </div>
             </div>
           </FadeIn>
@@ -386,6 +395,41 @@ export default function ProjectDetailClient() {
 
       <AnimatePresence>
         {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+      </AnimatePresence>
+
+      {/* PDF Export Placeholder Modal */}
+      <AnimatePresence>
+        {showExportModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowExportModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-2xl border border-gray-border bg-white p-6 shadow-xl text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 mx-auto mb-4">
+                <FileOutput className="h-7 w-7 text-accent" />
+              </div>
+              <h3 className="text-lg font-bold text-primary mb-2">PDF Export kommt bald</h3>
+              <p className="text-sm text-slate-text/60 mb-6">
+                Enthält alle Baufelder und favorisierte Varianten mit Kennwerten, Karten und Wirtschaftlichkeitsanalyse.
+              </p>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-light transition"
+              >
+                Verstanden
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </>
   );

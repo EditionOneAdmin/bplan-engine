@@ -56,6 +56,9 @@ export default function CreateBaufeldModal({ open, onClose, onSubmit }: Props) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="w-full max-w-md rounded-2xl border border-gray-border bg-white p-6 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Baufeld hinzufügen"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">

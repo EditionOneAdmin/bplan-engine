@@ -34,7 +34,14 @@ export default function BaufeldSection({ baufeld, varianten, onAddVariante, onSe
         >
           {expanded ? <ChevronDown className="h-4 w-4 text-slate-text/40" /> : <ChevronRight className="h-4 w-4 text-slate-text/40" />}
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-primary">{baufeld.name}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-primary">{baufeld.name}</h3>
+              {varianten.some(v => v.is_favorite) ? (
+                <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">Favorit gewählt</span>
+              ) : varianten.length > 0 ? (
+                <span className="inline-block rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-semibold text-yellow-700">In Planung</span>
+              ) : null}
+            </div>
             <div className="flex items-center gap-3 text-xs text-slate-text/50 mt-0.5">
               {baufeld.region && (
                 <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {baufeld.region}</span>

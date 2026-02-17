@@ -62,6 +62,13 @@ export default function VarianteCard({ variante, onSetFavorite, onDelete }: Prop
             <Star className="h-3 w-3" /> Als Favorit
           </button>
         )}
+        <a
+          href={`/uplan-engine/demo/?loadVariante=${variante.id}`}
+          className="flex items-center gap-1 rounded-lg border border-gray-border px-2.5 py-1.5 text-xs text-accent hover:border-accent hover:bg-accent/5 transition"
+          title="In Demo öffnen"
+        >
+          <ExternalLink className="h-3 w-3" /> In Demo öffnen
+        </a>
         <button
           onClick={onDelete}
           className="flex items-center gap-1 rounded-lg border border-gray-border px-2.5 py-1.5 text-xs text-red-500/70 hover:border-red-300 hover:text-red-600 transition ml-auto"
