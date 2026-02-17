@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Star, Trash2, MapPin, ExternalLink } from "lucide-react";
 import type { Variante } from "@/types/pipeline";
+import CashflowSparkline from "./CashflowSparkline";
 import { extractKPIs, healthScore, fmtArea, fmtCurrency, fmtPercent, fmtEuroM2, renditeColor, dscrColor } from "@/lib/pipeline-kpis";
 
 interface Props {
@@ -166,6 +167,14 @@ export default function VarianteCard({ variante, onSetFavorite, onDelete, isTopP
           {k.breakEvenMonth !== null && <KPIRow label="Break-Even" value={`Monat ${k.breakEvenMonth}`} />}
         </div>
       </div>
+
+      {/* Cashflow Sparkline */}
+      {k.monthlyCashflows && k.monthlyCashflows.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-gray-border/30">
+          <div className="text-[10px] text-slate-text/40 uppercase tracking-wider mb-1">Cashflow</div>
+          <CashflowSparkline cashflows={k.monthlyCashflows} breakEvenMonth={k.breakEvenMonth} peakCapital={k.peakCapital} width={200} height={36} />
+        </div>
+      )}
 
       {/* Actions */}
       <div className="mt-3 flex items-center gap-2">
