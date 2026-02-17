@@ -295,7 +295,7 @@ function HowItWorks() {
 /* ─── 3b. USP — Nicht bei null anfangen ────────────────── */
 
 const uspFeatures = [
-  { icon: Building2, title: "Katalog serieller Hersteller", desc: "GROPYUS, Nokera, ALHO, Goldbeck, Max Bögl — reale Gebäudemodule mit echten Grundrissen." },
+  { icon: Building2, title: "Katalog serieller Hersteller", desc: "GROPYUS, Nokera, ALHO, Goldbeck, Max Bögl uvm. — reale Gebäudemodule mit echten Grundrissen." },
   { icon: MousePointerClick, title: "Drag & Drop aufs Grundstück", desc: "Gebäude direkt auf das Flurstück platzieren. GRZ, GFZ, Abstandsflächen und Wohneinheiten sofort berechnet." },
   { icon: Calculator, title: "Sofortige Wirtschaftlichkeit", desc: "Baukosten, Mieteinnahmen und Rendite — kalkuliert auf Basis realer Herstellerpreise." },
   { icon: Zap, title: "Planung beschleunigt", desc: "Kein leeres Blatt Papier. Starten Sie mit erprobten Konzepten, die bereits gebaut wurden." },
