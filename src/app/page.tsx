@@ -411,6 +411,53 @@ function PipelineSection() {
   );
 }
 
+/* ─── PARTNER PREVIEW ──────────────────────────────────── */
+
+function PartnerPreview() {
+  return (
+    <Section id="partner-preview" gray>
+      <SectionHeading
+        title="Werden Sie Teil der Plattform"
+        subtitle="Ob Modulhersteller oder Architekturbüro — bringen Sie Ihre Produkte und Entwürfe auf U-Plan Engine."
+      />
+      <div className="grid gap-8 md:grid-cols-2">
+        <FadeIn>
+          <div className="rounded-2xl border border-gray-border bg-white p-8 shadow-sm h-full flex flex-col">
+            <span className="mb-3 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent uppercase tracking-wider w-fit">
+              Für Hersteller
+            </span>
+            <h3 className="text-lg font-bold text-primary">Modulhersteller & Systembauer</h3>
+            <ul className="mt-4 space-y-2 flex-1">
+              <li className="flex items-start gap-2 text-sm text-slate-text/70"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />Ihr Katalog vor tausenden Entwicklern</li>
+              <li className="flex items-start gap-2 text-sm text-slate-text/70"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />Direkte Aufträge in Tagen</li>
+              <li className="flex items-start gap-2 text-sm text-slate-text/70"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />Digitale Zwillinge mit BIM-Daten</li>
+            </ul>
+            <a href="/uplan-engine/partner" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent-light transition">
+              Mehr erfahren <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        </FadeIn>
+        <FadeIn delay={0.15}>
+          <div className="rounded-2xl border border-gray-border bg-white p-8 shadow-sm h-full flex flex-col">
+            <span className="mb-3 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary uppercase tracking-wider w-fit">
+              Für Planer & Architekten
+            </span>
+            <h3 className="text-lg font-bold text-primary">Pläne lizenzieren</h3>
+            <ul className="mt-4 space-y-2 flex-1">
+              <li className="flex items-start gap-2 text-sm text-slate-text/70"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />Passives Einkommen pro Nutzung</li>
+              <li className="flex items-start gap-2 text-sm text-slate-text/70"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />Serielle Wiederverwendung</li>
+              <li className="flex items-start gap-2 text-sm text-slate-text/70"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />Volle Kontrolle über Konditionen</li>
+            </ul>
+            <a href="/uplan-engine/partner" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent-light transition">
+              Mehr erfahren <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        </FadeIn>
+      </div>
+    </Section>
+  );
+}
+
 /* ─── 4. PRODUCT SHOWCASE ──────────────────────────────── */
 
 function ProductShowcase() {
@@ -784,7 +831,7 @@ function Footer() {
           <a href="/uplan-engine/anwendungsfaelle/serielle-planung" className="transition hover:text-primary">Serielle Planung</a>
           <a href="/uplan-engine/partner" className="transition hover:text-primary">Partner</a>
           <a href="/uplan-engine/technologie" className="transition hover:text-primary">Technologie</a>
-          <a href="/uplan-engine/lizenzen" className="transition hover:text-primary">Lizenzen</a>
+          <a href="/uplan-engine/partner" className="transition hover:text-primary">Partner</a>
           <a href="#faq" className="transition hover:text-primary">FAQ</a>
           <a href="#kontakt" className="transition hover:text-primary">Kontakt</a>
         </nav>
@@ -871,9 +918,8 @@ function Nav() {
             </AnimatePresence>
           </div>
 
-          <a href="/uplan-engine/partner" className="transition hover:text-primary">Partner</a>
+          <a href="/uplan-engine/partner" className="transition hover:text-primary">Partner werden</a>
           <a href="/uplan-engine/technologie" className="transition hover:text-primary">Technologie</a>
-          <a href="/uplan-engine/lizenzen" className="transition hover:text-primary">Pläne lizenzieren</a>
           <a href="#faq" className="transition hover:text-primary">FAQ</a>
         </nav>
 
@@ -912,7 +958,6 @@ function Nav() {
               ))}
               <a href="/uplan-engine/technologie" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>Technologie</a>
               <a href="/uplan-engine/partner" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>Partner werden</a>
-              <a href="/uplan-engine/lizenzen" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>Pläne lizenzieren</a>
               <a href="#faq" className="rounded-lg px-3 py-2.5 text-sm font-medium text-primary hover:bg-gray-bg transition" onClick={() => setMobileOpen(false)}>FAQ</a>
               <a href="/uplan-engine/demo" className="mt-2 rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-accent-light transition" onClick={() => setMobileOpen(false)}>Interaktive Demo</a>
             </nav>
@@ -935,6 +980,7 @@ export default function Home() {
         <USPSection />
         <PipelineSection />
         <UseCases />
+        <PartnerPreview />
         <ProductShowcase />
         <Audience />
         <Technology />
