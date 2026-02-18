@@ -207,8 +207,8 @@ function CashflowChart({
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   if (cashflows.length === 0) return null;
 
-  const W = 600;
-  const H = 150;
+  const W = 1200;
+  const H = 180;
   const PAD_L = 30;
   const PAD_R = 10;
   const PAD_T = 10;
@@ -234,7 +234,7 @@ function CashflowChart({
   }).join(" ");
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 150 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ aspectRatio: `${W}/${H}` }}>
       {/* Zero line */}
       <line x1={PAD_L} y1={midY} x2={W - PAD_R} y2={midY} stroke="white" strokeOpacity={0.15} strokeWidth={0.5} />
 
@@ -340,8 +340,8 @@ function RestschuldChart({
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   if (restschuldVerlauf.length === 0 || fkVolumen <= 0) return null;
 
-  const W = 600;
-  const H = 120;
+  const W = 1200;
+  const H = 150;
   const PAD_L = 30;
   const PAD_R = 10;
   const PAD_T = 10;
@@ -390,7 +390,7 @@ function RestschuldChart({
   }
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 120 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ aspectRatio: `${W}/${H}` }}>
       {/* Equity area (green) */}
       <path d={equityPath} fill="#22C55E" opacity={0.2} />
       {/* Restschuld area (red/amber) */}
@@ -1733,12 +1733,13 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
   return (
     <div className={fullWidth ? "space-y-4" : "space-y-3"}>
-      <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">
-        📊 Wirtschaftlichkeit (DIN 276)
-      </h2>
-
-      {/* Strategie-Tabs — always full width */}
-      {strategieTabsSection}
+      {/* Sticky Header: Titel + Hold/Sell Tabs */}
+      <div className={fullWidth ? "sticky top-0 z-10 bg-[#1E293B] pb-2 -mx-4 px-4 pt-1" : ""}>
+        <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">
+          📊 Wirtschaftlichkeit (DIN 276)
+        </h2>
+        {strategieTabsSection}
+      </div>
 
       <div className="space-y-2">
         {kostengruppenSection}
