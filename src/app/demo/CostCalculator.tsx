@@ -1715,32 +1715,38 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
   ) : null;
 
   return (
-    <div className="space-y-3">
+    <div className={fullWidth ? "space-y-4" : "space-y-3"}>
       <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">
         📊 Wirtschaftlichkeit (DIN 276)
       </h2>
 
+      {/* Strategie-Tabs — always full width */}
+      {strategieTabsSection}
+
       {fullWidth ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            {zeitachseSection}
-            {kostengruppenSection}
-            {finanzierungSection}
+        <>
+          <div className="grid grid-cols-2 gap-4">
+            {/* LEFT: Kosten, Finanzierung, Zeitachse */}
+            <div className="space-y-2">
+              {kostengruppenSection}
+              {finanzierungSection}
+              {zeitachseSection}
+            </div>
+            {/* RIGHT: Erlöse, Exit/Sensitivität */}
+            <div className="space-y-2">
+              {erloesSection}
+              {exitSection}
+              {sensitivitaetSection}
+            </div>
           </div>
-          <div className="space-y-2">
-            {strategieTabsSection}
-            {erloesSection}
-            {exitSection}
-            {sensitivitaetSection}
-            {kpiSection}
-          </div>
-        </div>
+          {/* KPI Dashboard — full width below */}
+          {kpiSection}
+        </>
       ) : (
         <div className="space-y-2">
           {kostengruppenSection}
           {finanzierungSection}
           {zeitachseSection}
-          {strategieTabsSection}
           {erloesSection}
           {sensitivitaetSection}
           {exitSection}
