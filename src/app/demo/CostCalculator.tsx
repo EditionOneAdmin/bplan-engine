@@ -574,6 +574,8 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
   const [vertriebsstart, setVertriebsstart] = useState(6);
   const [vertriebsende, setVertriebsende] = useState(15);
   const [auszahlungskurve, setAuszahlungskurve] = useState<"s-kurve" | "linear">("s-kurve");
+  const [costSensitivity, setCostSensitivity] = useState(0);
+  const [priceSensitivity, setPriceSensitivity] = useState(0);
 
   // Preset handlers
   const handlePreset = (preset: "seriell" | "konventionell") => {
@@ -1030,7 +1032,11 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         <div className="mt-3 p-3 bg-[#0F172A] rounded-lg border border-amber-500/20">
           <div className="flex justify-between items-center">
             <span className="text-xs font-bold text-amber-400">Gesamtkosten</span>
-            <span className="text-sm font-bold text-amber-400">{fmtEur(calc.gesamtkosten)}</span>
+            <span className="text-sm font-bold text-amber-400">
+              {costSensitivity !== 0 && strategy === "sell" ? (
+                <>{fmtEur(calc.gesamtkosten * (1 + costSensitivity / 100))} <span className="text-[9px] text-white/40">({costSensitivity > 0 ? "+" : ""}{costSensitivity}%)</span></>
+              ) : fmtEur(calc.gesamtkosten)}
+            </span>
           </div>
         </div>
       </Section>
@@ -1389,17 +1395,112 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-white/10">
               <span className="text-xs text-green-400 font-semibold">Verkaufserlös</span>
-              <span className="text-sm font-bold text-green-400">{fmtEur(calc.verkaufserloes)}</span>
+              <span className="text-sm font-bold text-green-400">
+                {priceSensitivity !== 0 ? (
+                  <>{fmtEur(calc.verkaufserloes * (1 + priceSensitivity / 100))} <span className="text-[9px] text-white/40">({priceSensitivity > 0 ? "+" : ""}{priceSensitivity}%)</span></>
+                ) : fmtEur(calc.verkaufserloes)}
+              </span>
             </div>
           </div>
         )}
       </Section>
 
-      {/* ── KPIs ─────────────────────────────────────────── */}
+      {/* ── Sensitivität (Sell only) ──────────────────── */}
+      {strategy === "sell" && (() => {
+        const hasSens = costSensitivity !== 0 || priceSensitivity !== 0;
+        const adjGesamtkosten = calc.gesamtkosten * (1 + costSensitivity / 100);
+        const adjVerkaufserloes = calc.verkaufserloes * (1 + priceSensitivity / 100);
+        const adjMarge = adjGesamtkosten > 0 ? ((adjVerkaufserloes - adjGesamtkosten) / adjGesamtkosten) * 100 : 0;
+        const adjEkRendite = finanzierungAktiv && calc.ekBedarf > 0
+          ? ((adjVerkaufserloes - adjGesamtkosten) / calc.ekBedarf) * 100
+          : null;
+        const sellLaufzeit = Math.max(bauende, vertriebsende);
+        const adjIrr = (() => {
+          if (finanzierungAktiv && adjEkRendite !== null) {
+            if (sellLaufzeit <= 0) return 0;
+            return (Math.pow(1 + adjEkRendite / 100, 12 / sellLaufzeit) - 1) * 100;
+          }
+          const years = sellLaufzeit / 12;
+          if (years <= 0 || adjGesamtkosten <= 0) return 0;
+          return (Math.pow(1 + adjMarge / 100, 1 / years) - 1) * 100;
+        })();
+        const adjGrundstuecksanteil = adjGesamtkosten > 0 ? (calc.kg100 / adjGesamtkosten) * 100 : 0;
+
+        return (
+          <>
+            <Section title="🔀 Sensitivität" color="#0D9488">
+              <div className="space-y-3">
+                {/* Cost Sensitivity Slider */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-white/60">Gesamtkosten</span>
+                    <span className="text-xs font-mono" style={{ color: costSensitivity > 0 ? "#EF4444" : costSensitivity < 0 ? "#22C55E" : "#94A3B8" }}>
+                      {costSensitivity > 0 ? "+" : ""}{costSensitivity}% → {fmtEur(adjGesamtkosten)}
+                    </span>
+                  </div>
+                  <input
+                    type="range" min={-30} max={30} step={1} value={costSensitivity}
+                    onChange={(e) => setCostSensitivity(Number(e.target.value))}
+                    className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                    style={{ background: `linear-gradient(to right, #0D9488, #0D9488 ${(costSensitivity + 30) / 60 * 100}%, #374151 ${(costSensitivity + 30) / 60 * 100}%, #374151)` }}
+                  />
+                </div>
+                {/* Price Sensitivity Slider */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-white/60">Verkaufspreis</span>
+                    <span className="text-xs font-mono" style={{ color: priceSensitivity > 0 ? "#22C55E" : priceSensitivity < 0 ? "#EF4444" : "#94A3B8" }}>
+                      {priceSensitivity > 0 ? "+" : ""}{priceSensitivity}% → {fmtEur(adjVerkaufserloes)}
+                    </span>
+                  </div>
+                  <input
+                    type="range" min={-30} max={30} step={1} value={priceSensitivity}
+                    onChange={(e) => setPriceSensitivity(Number(e.target.value))}
+                    className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                    style={{ background: `linear-gradient(to right, #0D9488, #0D9488 ${(priceSensitivity + 30) / 60 * 100}%, #374151 ${(priceSensitivity + 30) / 60 * 100}%, #374151)` }}
+                  />
+                </div>
+                {hasSens && (
+                  <button
+                    onClick={() => { setCostSensitivity(0); setPriceSensitivity(0); }}
+                    className="text-[10px] text-teal-400 hover:text-teal-300 underline"
+                  >
+                    ↺ Reset
+                  </button>
+                )}
+              </div>
+            </Section>
+
+            {/* ── KPIs (Sell with Sensitivity) ───────────────── */}
+            <Section title="KPI-Dashboard" color="#0D9488">
+              <div className="grid grid-cols-2 gap-2">
+                <KPICard label="Marge" value={fmtPct(hasSens ? adjMarge : calc.marge)} color={(hasSens ? adjMarge : calc.marge) > 0 ? "#22C55E" : "#EF4444"} />
+                <KPICard label="IRR (ann.)" value={fmtPct(hasSens ? adjIrr : calc.irrSell)} color="#0D9488" />
+                {finanzierungAktiv && (hasSens ? adjEkRendite : calc.ekRenditeSell) !== null && (
+                  <KPICard
+                    label="EK-Rendite"
+                    value={fmtPct((hasSens ? adjEkRendite : calc.ekRenditeSell)!)}
+                    color={(hasSens ? adjEkRendite! : calc.ekRenditeSell!) > 0 ? "#22C55E" : "#EF4444"}
+                  />
+                )}
+                <KPICard label="Break-Even" value={calc.breakEvenMonth !== null ? `${calc.breakEvenMonth}` : "—"} unit=" Mo." color="#22C55E" />
+                <KPICard label="Max. Kapitalbedarf" value={fmtEur(Math.abs(calc.peakCapital))} color="#EF4444" />
+                <KPICard label="Grundstücksanteil" value={fmtPct(hasSens ? adjGrundstuecksanteil : calc.grundstuecksanteil)} color="#FBBF24" />
+                <KPICard label="Baukosten/m²" value={`${Math.round(calc.baukostenProM2).toLocaleString("de-DE")}`} unit=" €" color="#A78BFA" />
+                <KPICard label="Betrachtung" value={`${calc.gesamtlaufzeitMonate}`} unit=" Mo." color="#94A3B8" />
+                {finanzierungAktiv && (
+                  <KPICard label="Monatl. Rate" value={fmtEur(calc.monatlicheRate)} color="#F59E0B" />
+                )}
+              </div>
+            </Section>
+          </>
+        );
+      })()}
+
+      {/* ── KPIs (Hold mode) ─────────────────────────────── */}
+      {strategy === "hold" && (
       <Section title="KPI-Dashboard" color="#0D9488">
         <div className="grid grid-cols-2 gap-2">
-          {strategy === "hold" ? (
-            <>
               <KPICard label="Nettoanfangsrendite" value={fmtPct(calc.niy)} color="#0D9488" />
               {finanzierungAktiv && calc.coc !== null && (
                 <KPICard
@@ -1429,30 +1530,14 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
                 value={fmtEur(calc.nettomieteJahr / 12 - calc.monatlicheRate)}
                 color={(calc.nettomieteJahr / 12 - calc.monatlicheRate) > 0 ? "#22C55E" : "#EF4444"}
               />
-            </>
-          ) : (
-            <>
-              <KPICard label="Marge" value={fmtPct(calc.marge)} color={calc.marge > 0 ? "#22C55E" : "#EF4444"} />
-              <KPICard label="IRR (ann.)" value={fmtPct(calc.irrSell)} color="#0D9488" />
-              {finanzierungAktiv && calc.ekRenditeSell !== null && (
-                <KPICard
-                  label="EK-Rendite"
-                  value={fmtPct(calc.ekRenditeSell)}
-                  color={calc.ekRenditeSell > 0 ? "#22C55E" : "#EF4444"}
-                />
-              )}
-            </>
-          )}
           <KPICard label="Break-Even" value={calc.breakEvenMonth !== null ? `${calc.breakEvenMonth}` : "—"} unit=" Mo." color="#22C55E" />
           <KPICard label="Max. Kapitalbedarf" value={fmtEur(Math.abs(calc.peakCapital))} color="#EF4444" />
           <KPICard label="Grundstücksanteil" value={fmtPct(calc.grundstuecksanteil)} color="#FBBF24" />
           <KPICard label="Baukosten/m²" value={`${Math.round(calc.baukostenProM2).toLocaleString("de-DE")}`} unit=" €" color="#A78BFA" />
-          <KPICard label="Betrachtung" value={strategy === "hold" ? `${betrachtungJahre * 12}` : `${calc.gesamtlaufzeitMonate}`} unit=" Mo." color="#94A3B8" />
-          {finanzierungAktiv && strategy === "sell" && (
-            <KPICard label="Monatl. Rate" value={fmtEur(calc.monatlicheRate)} color="#F59E0B" />
-          )}
+          <KPICard label="Betrachtung" value={`${betrachtungJahre * 12}`} unit=" Mo." color="#94A3B8" />
         </div>
       </Section>
+      )}
     </div>
   );
 }
