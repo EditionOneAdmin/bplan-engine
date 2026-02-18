@@ -1026,7 +1026,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
   /* ── Section Variables for fullWidth 2-column layout ── */
 
   const kostengruppenSection = (
-    <Section title="Kosten" color="#F59E0B">
+    <Section title="Wirtschaftlichkeit (DIN 276) — Kosten" color="#F59E0B">
         <CostRow label={<>KG 100 · Grundstück<InfoTooltip term="KG100" definition="Kostengruppe 100 — Grundstück (nach DIN 276)." /></>} value={calc.kg100} enabled={kg100On} onToggle={setKg100On}>
           <div className="space-y-2">
             {/* Zwei editierbare Felder: €/m² und Gesamtpreis */}
@@ -1733,11 +1733,8 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
   return (
     <div className={fullWidth ? "space-y-4" : "space-y-3"}>
-      {/* Sticky Header: Titel + Hold/Sell Tabs */}
+      {/* Sticky Header: Hold/Sell Tabs */}
       <div className={fullWidth ? "sticky top-0 z-10 bg-[#1E293B] pb-2 -mx-4 px-4 pt-1" : ""}>
-        <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">
-          📊 Wirtschaftlichkeit (DIN 276)
-        </h2>
         {strategieTabsSection}
       </div>
 
