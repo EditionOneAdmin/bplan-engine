@@ -537,9 +537,10 @@ interface Props {
   matchScore?: number;
   onCalcUpdate?: (data: CostData) => void;
   fullWidth?: boolean;
+  hideKpi?: boolean;
 }
 
-export function CostCalculator({ baufelder, placedUnits, buildings, filters, matchScore, onCalcUpdate, fullWidth = false }: Props) {
+export function CostCalculator({ baufelder, placedUnits, buildings, filters, matchScore, onCalcUpdate, fullWidth = false, hideKpi = false }: Props) {
   // Editable parameters
   const [kg200Pct, setKg200Pct] = useState(5);
   const [kg500Pct, setKg500Pct] = useState(4);
@@ -992,9 +993,22 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         bauende,
         vertriebsstart,
         vertriebsende,
+        irrHoldLevered: calc.irrHoldLevered,
+        irrHoldUnlevered: calc.irrHoldUnlevered,
+        multipleOnEquity: calc.multipleOnEquity,
+        totalProfitHold: calc.totalProfitHold,
+        avgCashYield: calc.avgCashYield,
+        restschuldEnde: calc.restschuldEnde,
+        equityBuildup: calc.equityBuildup,
+        nettomieteJahr: calc.nettomieteJahr,
+        exitWert: calc.exitWert,
+        exitErloes: calc.exitErloes,
+        bewirtschaftungPct,
+        betrachtungJahre,
+        finanzierungAktiv,
       });
     }
-  }, [calc, onCalcUpdate, baufelder.length, placedUnits.length, zinssatz, tilgung, ekQuote, strategy, baustart, bauende, vertriebsstart, vertriebsende]);
+  }, [calc, onCalcUpdate, baufelder.length, placedUnits.length, zinssatz, tilgung, ekQuote, strategy, baustart, bauende, vertriebsstart, vertriebsende, bewirtschaftungPct, betrachtungJahre, finanzierungAktiv]);
 
   if (baufelder.length === 0 && placedUnits.length === 0) {
     return (
@@ -1723,33 +1737,16 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
       {/* Strategie-Tabs — always full width */}
       {strategieTabsSection}
 
-      {fullWidth ? (
-        <>
-          <div className="grid grid-cols-2 gap-4">
-            {/* LEFT: Kosten, Finanzierung, Zeitachse */}
-            <div className="space-y-2">
-              {kostengruppenSection}
-              {finanzierungSection}
-              {zeitachseSection}
-            </div>
-            {/* RIGHT: Erlöse, Exit/Sensitivität */}
-            <div className="space-y-2">
-              {erloesSection}
-              {exitSection}
-              {sensitivitaetSection}
-            </div>
-          </div>
-          {/* KPI Dashboard — full width below */}
-          {kpiSection}
-        </>
-      ) : (
-        <div className="space-y-2">
-          {kostengruppenSection}
-          {finanzierungSection}
-          {zeitachseSection}
-          {erloesSection}
-          {sensitivitaetSection}
-          {exitSection}
+      <div className="space-y-2">
+        {kostengruppenSection}
+        {finanzierungSection}
+        {zeitachseSection}
+        {erloesSection}
+        {sensitivitaetSection}
+        {exitSection}
+      </div>
+      {!hideKpi && (
+        <div className={fullWidth ? "sticky bottom-0 z-10 bg-[#1E293B] pt-3 -mx-4 px-4 pb-1 border-t border-white/10 shadow-[0_-4px_12px_rgba(0,0,0,0.3)]" : ""}>
           {kpiSection}
         </div>
       )}

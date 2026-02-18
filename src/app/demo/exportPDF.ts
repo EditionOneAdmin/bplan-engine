@@ -75,6 +75,20 @@ export interface CostData {
   bauende?: number;
   vertriebsstart?: number;
   vertriebsende?: number;
+  // Extended KPIs
+  irrHoldLevered?: number | null;
+  irrHoldUnlevered?: number | null;
+  multipleOnEquity?: number;
+  totalProfitHold?: number;
+  avgCashYield?: number;
+  restschuldEnde?: number;
+  equityBuildup?: number;
+  nettomieteJahr?: number;
+  exitWert?: number;
+  exitErloes?: number;
+  bewirtschaftungPct?: number;
+  betrachtungJahre?: number;
+  finanzierungAktiv?: boolean;
 }
 
 // ── Main export interface ──

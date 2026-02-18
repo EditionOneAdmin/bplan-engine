@@ -8,6 +8,7 @@ import { FilterPanel } from "./FilterPanel";
 import { BottomBar } from "./BottomBar";
 import { DemoHeader } from "./DemoHeader";
 import { CostCalculator } from "./CostCalculator";
+import { KpiDashboard } from "./KpiDashboard";
 import { ExportModal } from "./ExportModal";
 import type { ExportConfig } from "./ExportModal";
 import { AddToProjectModal } from "./AddToProjectModal";
@@ -464,16 +465,26 @@ export default function DemoApp() {
 
           {/* Content panel */}
           {isWirtschaftlichkeit ? (
-            <div className="flex-1 min-h-0 overflow-y-auto bg-[#1E293B] p-4">
-              <CostCalculator
-                baufelder={baufelder}
-                placedUnits={placedUnits}
-                buildings={buildings}
-                filters={filters}
-                onCalcUpdate={setCostData}
-                matchScore={costCalculatorMatchScore}
-                fullWidth={true}
-              />
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* Scrollable: all sections except KPIs */}
+              <div className="flex-1 min-h-0 overflow-y-auto bg-[#1E293B] p-4">
+                <CostCalculator
+                  baufelder={baufelder}
+                  placedUnits={placedUnits}
+                  buildings={buildings}
+                  filters={filters}
+                  onCalcUpdate={setCostData}
+                  matchScore={costCalculatorMatchScore}
+                  fullWidth={true}
+                  hideKpi={true}
+                />
+              </div>
+              {/* Sticky KPI Dashboard at bottom */}
+              {costData && (
+                <div className="shrink-0 bg-[#1E293B] border-t border-white/10 p-4 max-h-[35vh] overflow-y-auto">
+                  <KpiDashboard costData={costData} fullWidth={true} />
+                </div>
+              )}
             </div>
           ) : (
             <div className="lg:w-[40%] flex flex-col min-h-0 border-l border-white/10">
