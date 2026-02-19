@@ -23,7 +23,17 @@ export default function CostBreakdown({ result }: Props) {
     .map(([key, grp]) => ({ key, grp: grp as KGGruppe }))
     .filter(({ grp }) => grp.total_eurBrutto > 0);
 
-  const maxVal = Math.max(...groups.map(g => g.grp.total_eurBrutto));
+  // Fixed max €/m² per KG group — bars scale to their OWN max, not relative to each other
+  const KG_MAX_EUR_M2: Record<string, number> = {
+    kg310: 80,    // Baugrube/Erdbau
+    kg320: 300,   // Gründung
+    kg330: 700,   // Außenwände
+    kg340: 600,   // Innenwände
+    kg350: 550,   // Decken
+    kg360: 200,   // Dächer
+    kg380: 600,   // Sonstige Maßnahmen
+    kg390: 100,   // Restposten
+  };
   const total = result.kg300.total_eurBrutto;
 
   return (
@@ -32,7 +42,8 @@ export default function CostBreakdown({ result }: Props) {
       <div className="space-y-2">
         {groups.map(({ key, grp }) => {
           const pct = total > 0 ? (grp.total_eurBrutto / total) * 100 : 0;
-          const barW = maxVal > 0 ? (grp.total_eurBrutto / maxVal) * 100 : 0;
+          const kgMax = (KG_MAX_EUR_M2[key] ?? 500) * (erloes > 0 ? erloes : 1);
+          const barW = kgMax > 0 ? Math.min((grp.total_eurBrutto / kgMax) * 100, 100) : 0;
           const m2 = erloes > 0 ? grp.total_eurBrutto / erloes : 0;
           return (
             <div key={key}>
