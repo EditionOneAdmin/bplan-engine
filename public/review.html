@@ -94,6 +94,8 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
 .viewer-img-wrap img.z150 { transform: scale(1.5); }
 .viewer-img-wrap img.z200 { transform: scale(2); }
 .viewer-img-wrap img.z300 { transform: scale(3); }
+.viewer-img-wrap.dragging { cursor: grabbing !important; }
+.viewer-img-wrap.draggable { cursor: grab; }
 
 /* Data Panel */
 .panel {
@@ -388,7 +390,32 @@ function setZoom(dir,reset){
   else zoom=Math.max(0,Math.min(3,zoom+dir));
   const img=document.getElementById('planImg');
   if(img) img.className=zoomLevels[zoom];
+  const wrap=document.getElementById('imgWrap');
+  if(wrap) wrap.className='viewer-img-wrap'+(zoom>0?' draggable':'');
 }
+
+// Drag-to-pan for zoomed images
+(function(){
+  let dragging=false, startX, startY, scrollL, scrollT, wrap;
+  document.addEventListener('mousedown',function(e){
+    wrap=document.getElementById('imgWrap');
+    if(!wrap||!wrap.classList.contains('draggable')) return;
+    if(e.target.closest('.viewer-toolbar')) return;
+    dragging=true; wrap.classList.add('dragging');
+    startX=e.clientX; startY=e.clientY;
+    scrollL=wrap.scrollLeft; scrollT=wrap.scrollTop;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',function(e){
+    if(!dragging||!wrap) return;
+    wrap.scrollLeft=scrollL-(e.clientX-startX);
+    wrap.scrollTop=scrollT-(e.clientY-startY);
+  });
+  document.addEventListener('mouseup',function(){
+    if(wrap) wrap.classList.remove('dragging');
+    dragging=false;
+  });
+})();
 
 function getExData(p) {
   if (activeModel === 'g3' && G3[p.id]) return { ex: G3[p.id], label: 'Gemini 3 Flash' };
