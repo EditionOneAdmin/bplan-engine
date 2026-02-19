@@ -5,6 +5,10 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import type { CostData } from "./exportPDF";
 import type { Baufeld, PlacedUnit, BuildingModule, Filters } from "./types";
 import { InfoTooltip } from "./InfoTooltip";
+import { calculateKostX } from "./kostx/engine/kostx-engine";
+import { KOSTX_DEFAULTS } from "./kostx/engine/kostx-defaults";
+import type { KostXConfig, KostXResult, Energiestandard, Fassadengestaltung, Fussbodenbelag, Balkontyp, Energieversorgung, Untergeschoss } from "./kostx/engine/kostx-types";
+import { CostBridge } from "./CostBridge";
 
 /* ── Mietspiegel Data ─────────────────────────────────────── */
 
@@ -583,6 +587,46 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
   const [costSensitivity, setCostSensitivity] = useState(0);
   const [priceSensitivity, setPriceSensitivity] = useState(0);
 
+  // KostX Smart Defaults
+  const [kostxEnergie, setKostxEnergie] = useState<Energiestandard>("GEG");
+  const [kostxFassade, setKostxFassade] = useState<Fassadengestaltung>("WDVS");
+  const [kostxBoden, setKostxBoden] = useState<Fussbodenbelag>("Qualitätsniveau: Vinyl");
+  const [kostxBalkon, setKostxBalkon] = useState<Balkontyp>("vorgestellte Balkone");
+  const [kostxHeizung, setKostxHeizung] = useState<Energieversorgung>("Fernwärme");
+  const [kostxUG, setKostxUG] = useState<Untergeschoss>("nein");
+  const [kostxPanelOpen, setKostxPanelOpen] = useState(false);
+  const [costBridgeOpen, setCostBridgeOpen] = useState(true);
+
+  // KostX result (computed from buildings + equipment choices)
+  const kostxResult = useMemo<KostXResult | null>(() => {
+    // Derive config from placed buildings
+    const totalBGFCalc = placedUnits.reduce((s, u) => s + u.area, 0);
+    const avgGeschosse = placedUnits.length > 0
+      ? placedUnits.reduce((s, u) => {
+          const b = buildings.find(bb => bb.id === u.buildingId);
+          return s + (b?.defaultGeschosse ?? 5);
+        }, 0) / placedUnits.length
+      : 5;
+
+    const config: KostXConfig = {
+      ...KOSTX_DEFAULTS,
+      geschosse: Math.round(avgGeschosse),
+      anzahlWE: Math.max(1, placedUnits.length * 4), // rough estimate
+      energiestandard: kostxEnergie,
+      fassadengestaltung: kostxFassade,
+      fussbodenbelag: kostxBoden,
+      balkontyp: kostxBalkon,
+      energieversorgung: kostxHeizung,
+      untergeschoss: kostxUG,
+    };
+
+    try {
+      return calculateKostX(config);
+    } catch {
+      return null;
+    }
+  }, [placedUnits, buildings, kostxEnergie, kostxFassade, kostxBoden, kostxBalkon, kostxHeizung, kostxUG]);
+
   // Exit-Szenario (Hold)
   const [exitJahre, setExitJahre] = useState(20);
   const [exitRestwertPct, setExitRestwertPct] = useState(100);
@@ -1093,6 +1137,90 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
         <CostRow label={<>KG 300+400 · Gebäude + Technik<InfoTooltip term="KG300" definition="Kostengruppe 300 — Bauwerk / Baukonstruktionen (Rohbau + Ausbau)." /></>} value={calc.kg300} enabled={kg300On} onToggle={setKg300On}>
           <div className="text-[10px] text-white/30">{placedUnits.length} Gebäude · {calc.totalBGF.toLocaleString("de-DE")} m² BGF<InfoTooltip term="BGF" definition="Bruttogrundfläche — gesamte Geschossfläche inkl. Wände, Treppenhäuser, Technik." /> · {calc.totalWohnflaeche.toLocaleString("de-DE")} m² WF<InfoTooltip term="WF" definition="Wohnfläche — nutzbare Wohnfläche (ca. 75% der BGF bei Wohnbau)." /> (75%)</div>
+          {/* KostX Smart Defaults */}
+          {kostxResult && (
+            <div className="mt-2 bg-white/5 rounded-lg p-2 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-white/50">
+                  Basis: <span className="text-white/70">{Math.round(kostxResult.basisHaus_eurM2).toLocaleString("de-DE")} €/m²</span>
+                  {' + Zuschläge: '}
+                  <span className="text-white/70">{Math.round(kostxResult.gik.gik_eurM2 - kostxResult.basisHaus_eurM2).toLocaleString("de-DE")} €/m²</span>
+                  {' = '}
+                  <span className="text-teal-400 font-semibold">{Math.round(kostxResult.gik.gik_eurM2).toLocaleString("de-DE")} €/m²</span>
+                </span>
+              </div>
+              <button
+                onClick={() => setKostxPanelOpen(!kostxPanelOpen)}
+                className="text-[10px] text-teal-400 hover:text-teal-300 transition-colors"
+              >
+                {kostxPanelOpen ? '▲ Ausstattung ausblenden' : '▼ Ausstattung anpassen'}
+              </button>
+              {kostxPanelOpen && (
+                <div className="space-y-2 pt-2 border-t border-white/10" style={{ transition: 'all 0.2s ease' }}>
+                  {/* Energiestandard */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/50">Energiestandard</span>
+                    <div className="flex gap-1">
+                      {(["GEG", "EH 55", "EH 40"] as Energiestandard[]).map(v => (
+                        <button key={v} onClick={() => setKostxEnergie(v)}
+                          className={`px-1.5 py-0.5 text-[9px] rounded ${kostxEnergie === v ? 'bg-teal-600 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>{v}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Fassade */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/50">Fassade</span>
+                    <div className="flex gap-1">
+                      {([["WDVS","WDVS"],["WDVS mit Klinkerriemchen","Klinker"]] as [Fassadengestaltung,string][]).map(([v,l]) => (
+                        <button key={v} onClick={() => setKostxFassade(v)}
+                          className={`px-1.5 py-0.5 text-[9px] rounded ${kostxFassade === v ? 'bg-teal-600 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Fußboden */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/50">Fußboden</span>
+                    <div className="flex gap-1">
+                      {([["Qualitätsniveau: Vinyl","Vinyl"],["Qualitätsniveau: Echtholzparkett","Parkett"]] as [Fussbodenbelag,string][]).map(([v,l]) => (
+                        <button key={v} onClick={() => setKostxBoden(v)}
+                          className={`px-1.5 py-0.5 text-[9px] rounded ${kostxBoden === v ? 'bg-teal-600 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Balkone */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/50">Balkone</span>
+                    <div className="flex gap-1">
+                      {([["vorgestellte Balkone","Vorgestellt"],["hängende Balkone","Hängend"],["Loggien","Loggia"]] as [Balkontyp,string][]).map(([v,l]) => (
+                        <button key={v} onClick={() => setKostxBalkon(v)}
+                          className={`px-1.5 py-0.5 text-[9px] rounded ${kostxBalkon === v ? 'bg-teal-600 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Energieversorgung */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/50">Energieversorgung</span>
+                    <div className="flex gap-1">
+                      {([["Fernwärme","FW"],["Luftwasserwärmepumpe","LWWP"],["geothermische Wärmepumpe","Geo"]] as [Energieversorgung,string][]).map(([v,l]) => (
+                        <button key={v} onClick={() => setKostxHeizung(v)}
+                          className={`px-1.5 py-0.5 text-[9px] rounded ${kostxHeizung === v ? 'bg-teal-600 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Untergeschoss */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/50">Untergeschoss</span>
+                    <div className="flex gap-1">
+                      {([["nein","Nein"],["Keller","Keller"],["Tiefgarage (einzeln)","TG"]] as [Untergeschoss,string][]).map(([v,l]) => (
+                        <button key={v} onClick={() => setKostxUG(v)}
+                          className={`px-1.5 py-0.5 text-[9px] rounded ${kostxUG === v ? 'bg-teal-600 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CostRow>
 
         <CostRow label={<>KG 500 · Außenanlagen<InfoTooltip term="KG500" definition="Kostengruppe 500 — Außenanlagen." /></>} value={calc.kg500} enabled={kg500On} onToggle={setKg500On}>
@@ -1139,6 +1267,28 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
         </div>
     </Section>
   );
+
+  const costBridgeSection = kostxResult ? (
+    <div className="border border-white/10 rounded-lg overflow-hidden mb-2">
+      <button
+        onClick={() => setCostBridgeOpen(!costBridgeOpen)}
+        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-white/5 transition-colors"
+        style={{ color: '#14B8A6' }}
+      >
+        {costBridgeOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        Kostenaufbau — Bridge (€/m² NUF)
+      </button>
+      <div style={{ maxHeight: costBridgeOpen ? '300px' : '0', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
+        <div className="px-3 pb-3">
+          <CostBridge
+            basisHaus_eurM2={kostxResult.basisHaus_eurM2}
+            zuschlaege={kostxResult.zuschlaege.filter(z => z.typ === 'zuschlag' || z.typ === 'abzug')}
+            gesamt_eurM2={kostxResult.gik.gik_eurM2}
+          />
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   const finanzierungSection = (
     <div className="border border-white/10 rounded-lg overflow-hidden mb-2">
@@ -1740,6 +1890,7 @@ export function CostCalculator({ baufelder, placedUnits, buildings, filters, mat
 
       <div className="space-y-2">
         {kostengruppenSection}
+        {costBridgeSection}
         {finanzierungSection}
         {zeitachseSection}
         {erloesSection}
