@@ -16,7 +16,8 @@ import type { KostXConfig, MassCalculation, GIKCalculation, EconomicsResult } fr
 export function calculateGIK(
   config: KostXConfig,
   basisHaus_eurM2: number,
-  masses: MassCalculation
+  masses: MassCalculation,
+  honorarBrutto: number = 0,
 ): GIKCalculation {
   const nuf = masses.erloesflaecheWarm_m2;
 
@@ -30,10 +31,8 @@ export function calculateGIK(
   // But F19 = Honorarrechner — we approximate as part of iterative calc
   // Simplified: kg700Honorare ≈ will be computed later
 
-  // For now: placeholder honorare (from Excel: ~613 €/m²)
-  // Actually the formula is: F19 = Honorarrechner!E21 which is external
-  // We use a simple approximation: Honorare ≈ 0 for MVP (user enters kg700Sonstige)
-  const kg700Honorare_eur = 0; // Phase 2: Honorarrechner integration
+  // KG 700 Honorare aus Honorarrechner (HOAI-basiert)
+  const kg700Honorare_eur = honorarBrutto;
 
   const kg700Sonstige_eur = config.kg700Sonstige_eurM2 * nuf;
 

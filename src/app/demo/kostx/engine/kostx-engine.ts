@@ -10,6 +10,7 @@ import type { KostXConfig, KostXResult, ZuschlagItem } from './kostx-types';
 import { calculateMasses } from './masses';
 import { calculateKG300 } from './kg300';
 import { calculateKG400 } from './kg400';
+import { calculateHonorar } from './honorar';
 import { calculateGIK, calculateEconomics } from './economics';
 import { calculateBasement } from './basement';
 
@@ -76,13 +77,16 @@ export function calculateKostX(config: KostXConfig): KostXResult {
     ? (kg300.total_eurBrutto + kg400.total_eurBrutto) / erloes
     : 0;
 
-  // 6. Waterfall
+  // 6. Honorarrechner (KG 700 Planungsleistungen)
+  const honorar = calculateHonorar(config, masses, kg300.total_eurBrutto, kg400.total_eurBrutto);
+
+  // 7. Waterfall
   const zuschlaege = computeZuschlaege(config, masses, basisHaus_eurM2);
 
-  // 7. GIK
-  const gik = calculateGIK(config, basisHaus_eurM2, masses);
+  // 8. GIK (mit Honorar)
+  const gik = calculateGIK(config, basisHaus_eurM2, masses, honorar.total_brutto);
 
-  // 8. Economics
+  // 9. Economics
   const economics = calculateEconomics(config, gik, masses);
 
   return {
@@ -92,6 +96,7 @@ export function calculateKostX(config: KostXConfig): KostXResult {
     basement,
     basisHaus_eurM2,
     zuschlaege,
+    honorar,
     gik,
     economics,
   };

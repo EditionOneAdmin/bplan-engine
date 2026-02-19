@@ -375,6 +375,31 @@ export interface ZuschlagItem {
 }
 
 // ============================================================
+// A.8 Honorarrechner (KG 700)
+// ============================================================
+
+export interface HonorarGewerkResult {
+  name: string;
+  anrechenbareKosten: number;
+  honorar100Pct_netto: number;
+  honorar_netto: number;
+  honorar_brutto: number;
+  lpSumme: number;
+  enabled: boolean;
+}
+
+export interface HonorarResult {
+  /** Gesamthonorar brutto (€) — Excel Honorarrechner D21 */
+  total_brutto: number;
+  /** €/m² NUF brutto — Excel Honorarrechner E21 */
+  total_eurM2NUF: number;
+  /** Aufschlüsselung nach Gewerk */
+  gewerke: HonorarGewerkResult[];
+  /** Anteil an KG 300-500 */
+  anteilKG300_500: number;
+}
+
+// ============================================================
 // Gesamtergebnis
 // ============================================================
 
@@ -386,6 +411,8 @@ export interface KostXResult {
   /** KG 300+400 €/m² NUF brutto */
   basisHaus_eurM2: number;
   zuschlaege: ZuschlagItem[];
+  /** Honorarrechner — KG 700 Planungsleistungen */
+  honorar: HonorarResult;
   gik: GIKCalculation;
   economics: EconomicsResult;
 }
