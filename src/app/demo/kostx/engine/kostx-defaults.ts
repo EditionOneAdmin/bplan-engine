@@ -3,7 +3,36 @@
  * Entspricht exakt den Excel-Defaults aus plan.xlsm
  */
 
-import type { KostXConfig } from './kostx-types';
+import type { KostXConfig, TiefgarageConfig } from './kostx-types';
+
+/**
+ * Default-Konfiguration für Tiefgarage 1.
+ * Entspricht Excel: Tiefgaragenrechner Spalte D (TG1)
+ */
+export const TIEFGARAGE_DEFAULTS: TiefgarageConfig = {
+  berechnungsmethode: 'ueber_stellplaetze',
+  grundflaeche_m2: 375,
+  umfang_m: 80,
+  anzahlStellplaetze: 20,
+  stellplatzGroesse_m2: 25,
+  anzahlKellerabteile: 10,
+  kellerabteilGroesse_m2: 10,
+  technikflaeche_m2: 40,
+  nebenraumflaeche_m2: 40,
+  lichteGeschosshoehe_m: 2.6,
+  ug2: true,
+  ug2Anteil: 1.0,
+  ug3: true,
+  ug3Anteil: 1.0,
+  ug4: false,
+  ug4Anteil: 1.0,
+  anzahlTreppenhaeuser: 1,
+  anzahlEinfahrten: 1,
+  anzahlDoppelparker: 0,
+  anzahlLadestationen: 0,
+  skalierungseffekte: 0,
+  inklKellerabteile: true,
+};
 
 export const KOSTX_DEFAULTS: KostXConfig = {
   // A.1.1 Gebäudeparameter

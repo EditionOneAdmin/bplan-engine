@@ -6,79 +6,12 @@
  * Excel: Kostenmodell (gesamtes Sheet)
  */
 
-import type { KostXConfig, KostXResult, ZuschlagItem, BasementCost } from './kostx-types';
+import type { KostXConfig, KostXResult, ZuschlagItem } from './kostx-types';
 import { calculateMasses } from './masses';
 import { calculateKG300 } from './kg300';
 import { calculateKG400 } from './kg400';
 import { calculateGIK, calculateEconomics } from './economics';
-import {
-  lookupBaupreisindex,
-  lookupBodenplatte,
-  lookupGebaeudeklasseZuschlag,
-  GRUENDACH_ZUSCHLAEGE,
-  SONNENSCHUTZ_PREISE,
-  ENERGIESTANDARD_ZUSCHLAEGE,
-  EP,
-} from './lookup-tables';
-
-const MwSt = 1.19;
-
-/**
- * Berechnet Untergeschoss-Kosten (Keller / TG einzeln).
- * Excel: Kostenmodell Rows 225-238
- */
-function calculateBasement(config: KostXConfig, masses: import('./kostx-types').MassCalculation): BasementCost | null {
-  if (config.untergeschoss === 'nein' || config.untergeschoss === 'keine Angabe') return null;
-
-  const rf = config.regionalfaktor;
-  const isTG = config.untergeschoss === 'Tiefgarage (einzeln)';
-  const bgfUi = masses.bgfRui_m2;
-  const erloes = masses.erloesflaecheWarm_m2;
-
-  if (bgfUi <= 0) return null;
-
-  const bp = lookupBodenplatte(config.geschosse);
-  const umfang = masses.umfang_m;
-  const geschosshoehe = 3.2; // Standard UG-Höhe
-
-  // Positionen
-  const aushub = { netto: bgfUi * EP.ugAushub_eurM2 * rf };
-  const bodenplatte = { netto: Math.max(0, bgfUi - masses.gr_m2) * bp.preisNetto_eurM2 * rf };
-  const aussenwand = { netto: umfang * geschosshoehe * EP.ugAussenwand_eurM2 * rf };
-  const innenwand = { netto: umfang * geschosshoehe * EP.ugInnenwand_eurM2 * rf * 0.5 }; // ~50% der AW
-  const stuetzen = { netto: (bgfUi / 25) * 3 * EP.ugStuetzen_eurLfm * rf };
-  const decke = { netto: bgfUi * EP.ugDecke_eurM2 * rf };
-  const rampe = { netto: isTG ? EP.ugRampe_eurPsch * rf : 0 };
-  const treppe = { netto: EP.ugTreppe_eurStk * rf };
-  const stahltueren = { netto: Math.round(bgfUi / 50) * EP.ugStahltuer_eurStk * rf };
-
-  const kg300Positionen = aushub.netto + bodenplatte.netto + aussenwand.netto
-    + innenwand.netto + stuetzen.netto + decke.netto + rampe.netto + treppe.netto + stahltueren.netto;
-
-  // KG 400 UG
-  const kg400Rate = isTG ? EP.ugKG400TG_eurM2 : EP.ugKG400Keller_eurM2;
-  const kg400Netto = bgfUi * kg400Rate * rf;
-
-  // Sonstige + BE
-  const sonstiges = EP.ugSonstigesProzent * kg300Positionen;
-  const be = EP.ugBEProzent * kg300Positionen;
-
-  // Baupreissteigerung
-  const bpi = lookupBaupreisindex(config.baubeginn);
-  const bpiKosten = bpi * (kg300Positionen + sonstiges + be + kg400Netto);
-
-  const totalNetto = kg300Positionen + sonstiges + be + kg400Netto + bpiKosten;
-
-  return {
-    positionen: [], // Simplified for MVP
-    totalKG300_eurNetto: kg300Positionen + sonstiges + be,
-    totalKG400_eurNetto: kg400Netto,
-    total_eurNetto: totalNetto,
-    total_eurBrutto: totalNetto * MwSt,
-    kkwKG300_eurM2Brutto: erloes > 0 ? (kg300Positionen + sonstiges + be) * MwSt / erloes : 0,
-    kkwKG400_eurM2Brutto: erloes > 0 ? kg400Netto * MwSt / erloes : 0,
-  };
-}
+import { calculateBasement } from './basement';
 
 /**
  * Erzeugt Zuschlag-Waterfall-Daten für Visualisierung.

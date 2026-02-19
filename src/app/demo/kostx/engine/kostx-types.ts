@@ -124,6 +124,9 @@ export interface KostXConfig {
 
   // Extra-Kosten
   extraKosten: ExtraKosten[];
+
+  // A.1.7 Tiefgarage (optional, bei untergeschoss="Tiefgarage (einzeln)")
+  tiefgarage?: TiefgarageConfig;
 }
 
 // ============================================================
@@ -221,6 +224,117 @@ export interface BasementCost {
   /** €/m² NUF brutto */
   kkwKG300_eurM2Brutto: number;
   kkwKG400_eurM2Brutto: number;
+  /** Detailliertes TG-Ergebnis (nur bei Tiefgarage) */
+  tiefgarageResult?: TiefgarageResult;
+}
+
+// ============================================================
+// A.6b Tiefgaragenrechner
+// ============================================================
+
+export type TGBerechnungsmethode = 'ueber_stellplaetze' | 'ueber_flaeche';
+
+/** Extra-Kosten pro TG (Excel: Rows 34-36, Positionen 13-15) */
+export interface TGExtraKosten {
+  name: string;
+  betrag_eurM2Brutto: number;
+}
+
+/**
+ * Konfiguration einer einzelnen Tiefgarage.
+ * Excel: Sheet "Tiefgaragenrechner", Spalte D (TG1), E (TG2), etc.
+ */
+export interface TiefgarageConfig {
+  /** Excel: D6 — "über Stellplätze" oder "über Fläche" */
+  berechnungsmethode: TGBerechnungsmethode;
+
+  // --- Grobberechnung über Fläche (D10-D11) ---
+  /** Excel: D10 — Grundfläche 1. UG in m² */
+  grundflaeche_m2: number;
+  /** Excel: D11 — Umfang in m */
+  umfang_m: number;
+
+  // --- Detailberechnung über Stellplätze (D13-D18) ---
+  /** Excel: D13 — Anzahl Stellplätze */
+  anzahlStellplaetze: number;
+  /** Excel: D14 — Ø Stellplatzgröße inkl. Verkehrsfläche in m² */
+  stellplatzGroesse_m2: number;
+  /** Excel: D15 — Anzahl Kellerabteile */
+  anzahlKellerabteile: number;
+  /** Excel: D16 — Ø Größe Kellerabteil inkl. Verkehrsfläche in m² */
+  kellerabteilGroesse_m2: number;
+  /** Excel: D17 — Technikfläche in m² */
+  technikflaeche_m2: number;
+  /** Excel: D18 — Fläche Nebenräume (Fahrradraum etc.) in m² */
+  nebenraumflaeche_m2: number;
+
+  // --- Geschossigkeit (D20-D26) ---
+  /** Excel: D20 — Lichte Geschosshöhe ui in m */
+  lichteGeschosshoehe_m: number;
+  /** Excel: D21 — 2. Untergeschoss ja/nein */
+  ug2: boolean;
+  /** Excel: D22 — Anteil 2. UG an Vollgeschossfläche (0-1) */
+  ug2Anteil: number;
+  /** Excel: D23 — 3. Untergeschoss ja/nein */
+  ug3: boolean;
+  /** Excel: D24 — Anteil 3. UG */
+  ug3Anteil: number;
+  /** Excel: D25 — 4. Untergeschoss ja/nein */
+  ug4: boolean;
+  /** Excel: D26 — Anteil 4. UG */
+  ug4Anteil: number;
+
+  // --- Weitere Angaben (D28-D36) ---
+  /** Excel: D28 — Anzahl Treppenhäuser */
+  anzahlTreppenhaeuser: number;
+  /** Excel: D29 — Anzahl Ein-/Ausfahrten */
+  anzahlEinfahrten: number;
+  /** Excel: D30 — Anzahl Doppelparker */
+  anzahlDoppelparker: number;
+  /** Excel: D31 — Anzahl Ladestationen */
+  anzahlLadestationen: number;
+  /** Excel: D32 — Skalierungseffekte (%-Abzug, 0-1) */
+  skalierungseffekte: number;
+  /** Excel: D7 — TG inkl. Kellerabteile */
+  inklKellerabteile: boolean;
+  /** Excel: K15 — Überbaute TG-Fläche in m² (für Bodenplatte) */
+  ueberbauteFlaeche_m2?: number;
+  /** Excel: D34-D36 — Extra-Kosten (bis zu 3) */
+  extraKosten?: TGExtraKosten[];
+}
+
+/** Einzelposition im TG-Rechner */
+export interface TiefgaragePosition {
+  nr: number;
+  name: string;
+  menge: number;
+  einheit: string;
+  ep_netto: number;
+  ep_brutto?: number;
+  gp_netto?: number;
+  gp_brutto?: number;
+}
+
+/**
+ * Ergebnis einer einzelnen Tiefgarage.
+ * Excel: Tiefgaragenrechner Rows 41-60
+ */
+export interface TiefgarageResult {
+  positionen: TiefgaragePosition[];
+  sonstigesNetto: number;
+  beNetto: number;
+  skalierungNetto: number;
+  bpiNetto: number;
+  /** Grundfläche 1. UG (Excel: K13) */
+  gr_m2: number;
+  /** BGF unterirdisch gesamt (Excel: K14) */
+  bgfUi_m2: number;
+  totalKG300_eurNetto: number;
+  totalKG400_eurNetto: number;
+  total_eurNetto: number;
+  total_eurBrutto: number;
+  /** €/m² BGF ui brutto (Excel: J39) */
+  kkwBGFui_eurM2Brutto: number;
 }
 
 // ============================================================
