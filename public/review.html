@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>B-Plan Extraction Review — UPLAN GeoIndex</title>
+<title>B-Plan Extraction Review — Model Comparison — UPLAN GeoIndex</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -312,6 +312,41 @@ const P = [
     ex:[{t:"",g:"WA",grz:0.7,gfz:null,gs:5,bw:"o",h:51,df:"",c:{grz:1,gfz:0,gs:1,bw:0.8},s:[]}]}
 ];
 
+// Gemini 3 Flash extractions (all 30 plans)
+const G3={
+"01":[{t:"",g:"WA",grz:0.4,gfz:null,gs:2,bw:"o",h:null,df:"FD",c:{grz:.9,gfz:0,gs:.5,bw:.9},s:[]}],
+"02":[{t:"MI 1",g:"MI",grz:0.4,gfz:0.8,gs:6,bw:"g",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"MI 2",g:"MI",grz:0.4,gfz:0.8,gs:5,bw:"g",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"03":[{t:"WA 1",g:"WA",grz:0.4,gfz:null,gs:5,bw:"o",h:null,df:"",c:{grz:.9,gfz:0,gs:.9,bw:.9},s:[]},{t:"WA 2",g:"WA",grz:0.4,gfz:null,gs:4,bw:"o",h:null,df:"",c:{grz:.9,gfz:0,gs:.9,bw:.9},s:[]}],
+"04":[{t:"WA 1",g:"WA",grz:0.4,gfz:2.1,gs:12,bw:"",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:0},s:[]},{t:"WA 2",g:"WA",grz:0.4,gfz:2.2,gs:8,bw:"",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:0},s:[]},{t:"WA 3",g:"WA",grz:0.3,gfz:1.6,gs:7,bw:"",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:0},s:[]},{t:"WA 4",g:"WA",grz:0.3,gfz:null,gs:4,bw:"",h:null,df:"",c:{grz:.9,gfz:0,gs:.9,bw:0},s:[]}],
+"05":[{t:"WA 1",g:"WA",grz:0.4,gfz:1.6,gs:5,bw:"g",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"WA 2",g:"WA",grz:0.4,gfz:1.6,gs:6,bw:"g",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"06":[{t:"WA",g:"WA",grz:0.4,gfz:0.2,gs:2,bw:"ED",h:null,df:"",c:{grz:.9,gfz:.5,gs:.9,bw:.9},s:[]}],
+"07":[{t:"MK",g:"MK",grz:0.8,gfz:3.0,gs:4,bw:"g",h:62,df:"",c:{grz:.9,gfz:.9,gs:.5,bw:.9},s:[]}],
+"08":[{t:"WA",g:"WA",grz:0.4,gfz:0.8,gs:3,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"09":[{t:"WA 1",g:"WA",grz:0.4,gfz:0.8,gs:3,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"WA 2",g:"WA",grz:0.4,gfz:0.8,gs:4,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"10":[{t:"Am Lokdepot",g:"WA",grz:null,gfz:null,gs:6,bw:"a",h:null,df:"FD",c:{grz:.1,gfz:.1,gs:.9,bw:.8},s:[]}],
+"11":[{t:"Wohnen",g:"WA",grz:0.6,gfz:1.1,gs:7,bw:"g",h:null,df:"FD",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"12":[{t:"Wohnen 1",g:"WA",grz:null,gfz:null,gs:8,bw:"",h:null,df:"FD",c:{grz:.1,gfz:.1,gs:1,bw:.1},s:[]},{t:"Wohnen 2",g:"WA",grz:null,gfz:null,gs:8,bw:"",h:null,df:"FD",c:{grz:.1,gfz:.1,gs:1,bw:.1},s:[]}],
+"13":[{t:"WA1",g:"WA",grz:0.4,gfz:0.8,gs:3,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"WA2",g:"WA",grz:0.4,gfz:0.8,gs:3,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"14":[{t:"WB 1",g:"WB",grz:null,gfz:null,gs:5,bw:"g",h:null,df:"",c:{grz:.1,gfz:.1,gs:.9,bw:.9},s:[]},{t:"WB 2",g:"WB",grz:null,gfz:null,gs:6,bw:"g",h:null,df:"",c:{grz:.1,gfz:.1,gs:.9,bw:.9},s:[]},{t:"MI",g:"MI",grz:null,gfz:null,gs:6,bw:"g",h:null,df:"",c:{grz:.1,gfz:.1,gs:.9,bw:.9},s:[]}],
+"15":[{t:"WA1",g:"WA",grz:0.2,gfz:0.4,gs:2,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"16":[{t:"GEe",g:"GE",grz:0.4,gfz:null,gs:null,bw:"",h:null,df:"",c:{grz:1,gfz:0,gs:0,bw:0},s:[]}],
+"17":[{t:"",g:"WR",grz:0.2,gfz:0.4,gs:2,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"",g:"WA",grz:0.4,gfz:0.8,gs:3,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"",g:"GE",grz:null,gfz:0.8,gs:2,bw:"o",h:null,df:"",c:{grz:.5,gfz:.9,gs:.9,bw:.9},s:[]}],
+"18":[{t:"GE",g:"GE",grz:0.8,gfz:1.2,gs:3,bw:"",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.5},s:[]},{t:"GB",g:"GB",grz:0.4,gfz:1.2,gs:4,bw:"",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.5},s:[]},{t:"WA 2-7",g:"WA",grz:null,gfz:null,gs:5,bw:"o",h:null,df:"",c:{grz:.5,gfz:.5,gs:.9,bw:.9},s:[]}],
+"19":[{t:"GE 1",g:"GE",grz:0.6,gfz:1.6,gs:null,bw:"",h:20,df:"",c:{grz:.9,gfz:.9,gs:.5,bw:.5},s:[]},{t:"GE 2-7",g:"GE",grz:0.6,gfz:1.7,gs:null,bw:"",h:18,df:"",c:{grz:.9,gfz:.9,gs:.5,bw:.5},s:[]}],
+"20":[{t:"WA",g:"WA",grz:0.8,gfz:3,gs:null,bw:"g",h:25.3,df:"",c:{grz:.9,gfz:.9,gs:.8,bw:.9},s:[]},{t:"MK",g:"MK",grz:1,gfz:6,gs:null,bw:"g",h:37.3,df:"",c:{grz:.9,gfz:.9,gs:.8,bw:.9},s:[]},{t:"SO",g:"SO",grz:1,gfz:4,gs:null,bw:"g",h:25.3,df:"",c:{grz:.9,gfz:.9,gs:.8,bw:.9},s:[]}],
+"21":[{t:"",g:"WA",grz:0.4,gfz:0.8,gs:3,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"22":[{t:"",g:"WA",grz:0.6,gfz:null,gs:6,bw:"o",h:null,df:"",c:{grz:.7,gfz:.2,gs:.9,bw:.7},s:[]}],
+"23":[{t:"West",g:"WA",grz:0.4,gfz:1.3,gs:7,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"Ost",g:"WA",grz:0.4,gfz:1.3,gs:7,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"24":[{t:"WA",g:"WA",grz:0.4,gfz:0.8,gs:3,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"MI",g:"MI",grz:0.6,gfz:1.2,gs:4,bw:"g",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"MK 1",g:"MK",grz:0.6,gfz:3.2,gs:null,bw:"g",h:88.2,df:"",c:{grz:.9,gfz:.9,gs:.5,bw:.9},s:[]},{t:"MK 2",g:"MK",grz:0.6,gfz:3.2,gs:null,bw:"g",h:88.2,df:"",c:{grz:.9,gfz:.9,gs:.5,bw:.9},s:[]}],
+"25":[{t:"WA1",g:"WA",grz:0.4,gfz:0.8,gs:4,bw:"o",h:12.4,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]},{t:"WA2",g:"WA",grz:0.4,gfz:0.8,gs:2,bw:"o",h:9.4,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"26":[{t:"",g:"WA",grz:0.4,gfz:1.2,gs:3,bw:"g",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"27":[{t:"I A",g:"WA",grz:0.4,gfz:null,gs:3,bw:"o",h:null,df:"",c:{grz:.9,gfz:.5,gs:.9,bw:.9},s:[]}],
+"28":[{t:"GE 1",g:"GE",grz:0.4,gfz:1,gs:3,bw:"o",h:null,df:"",c:{grz:1,gfz:1,gs:1,bw:.9},s:[]},{t:"GE 2",g:"GE",grz:0.5,gfz:1,gs:2,bw:"o",h:null,df:"",c:{grz:1,gfz:1,gs:1,bw:.9},s:[]},{t:"GE 3",g:"GE",grz:0.4,gfz:0.8,gs:2,bw:"o",h:null,df:"",c:{grz:1,gfz:1,gs:1,bw:.9},s:[]},{t:"WA",g:"WA",grz:0.25,gfz:0.5,gs:2,bw:"o",h:null,df:"",c:{grz:1,gfz:1,gs:1,bw:1},s:[]},{t:"MI",g:"MI",grz:0.4,gfz:1,gs:3,bw:"o",h:null,df:"",c:{grz:1,gfz:1,gs:1,bw:.9},s:[]}],
+"29":[{t:"",g:"WA",grz:0.4,gfz:1.2,gs:4,bw:"o",h:null,df:"",c:{grz:.9,gfz:.9,gs:.9,bw:.9},s:[]}],
+"30":[{t:"",g:"WA",grz:null,gfz:null,gs:5,bw:"o",h:null,df:"",c:{grz:.5,gfz:.5,gs:.9,bw:.7},s:[]}]
+};
+
+let activeModel = 'current'; // 'current' (Claude/G2.5), 'g3'
 let R = JSON.parse(localStorage.getItem('bplan-r2')||'{}');
 let cur = 0, zoom = 0;
 const zoomLevels = ['','z150','z200','z300'];
@@ -355,11 +390,26 @@ function setZoom(dir,reset){
   if(img) img.className=zoomLevels[zoom];
 }
 
+function getExData(p) {
+  if (activeModel === 'g3' && G3[p.id]) return { ex: G3[p.id], label: 'Gemini 3 Flash' };
+  return { ex: p.ex, label: p.id <= '10' ? 'Claude Sonnet' : 'Gemini 2.5 Flash' };
+}
+
+function renderModelTabs(p) {
+  const hasG3 = !!G3[p.id];
+  const origLabel = p.id <= '10' ? 'Claude' : 'G2.5 Flash';
+  return `<div style="display:flex;gap:6px;margin-bottom:12px">
+    <button onclick="activeModel='current';go(cur)" style="padding:4px 12px;border-radius:6px;border:1px solid ${activeModel==='current'?'var(--accent)':'var(--border)'};background:${activeModel==='current'?'var(--accent)':'var(--bg3)'};color:${activeModel==='current'?'#000':'var(--text2)'};cursor:pointer;font-size:12px;font-weight:600">${origLabel}</button>
+    ${hasG3?`<button onclick="activeModel='g3';go(cur)" style="padding:4px 12px;border-radius:6px;border:1px solid ${activeModel==='g3'?'#22c55e':'var(--border)'};background:${activeModel==='g3'?'#22c55e':'var(--bg3)'};color:${activeModel==='g3'?'#000':'var(--text2)'};cursor:pointer;font-size:12px;font-weight:600">G3 Flash</button>`:''}
+  </div>`;
+}
+
 function renderPanel(p){
+  const { ex, label } = getExData(p);
   document.getElementById('panelTitle').innerHTML=`<span class="accent">${p.name}</span> — ${p.bz}`;
-  document.getElementById('panelSub').textContent=`${p.typ} · Rechtskraft ${p.yr} · ${p.ex.length} Teilgebiet${p.ex.length>1?'e':''}`;
+  document.getElementById('panelSub').textContent=`${p.typ} · ${p.yr} · ${ex.length} Gebiet${ex.length>1?'e':''} · ${label}`;
   
-  document.getElementById('panelBody').innerHTML=p.ex.map(e=>`
+  document.getElementById('panelBody').innerHTML=renderModelTabs(p)+ex.map(e=>`
     <div class="card">
       <div class="card-header">
         <span class="card-title">${e.t}</span>
