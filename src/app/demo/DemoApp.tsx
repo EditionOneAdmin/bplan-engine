@@ -9,6 +9,7 @@ import { BottomBar } from "./BottomBar";
 import { DemoHeader } from "./DemoHeader";
 import { CostCalculator } from "./CostCalculator";
 import { KpiDashboard } from "./KpiDashboard";
+import { BuildingList } from "./BuildingList";
 import { ExportModal } from "./ExportModal";
 import type { ExportConfig } from "./ExportModal";
 import { AddToProjectModal } from "./AddToProjectModal";
@@ -56,6 +57,8 @@ export default function DemoApp() {
   const [placeMode, setPlaceMode] = useState(false);
   // Steckbrief modal for placed units
   const [steckbriefUnit, setSteckbriefUnit] = useState<string | null>(null);
+  // Selected unit in building list (Wirtschaftlichkeit sidebar)
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   // Tab state for right panel
   const [activeTab, setActiveTab] = useState<"katalog" | "wirtschaftlichkeit">("katalog");
   // Export modal
@@ -441,50 +444,87 @@ export default function DemoApp() {
       {/* Main content area — map is ALWAYS rendered (single DOM node for Leaflet) */}
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 flex flex-col lg:flex-row min-h-0 relative">
-          {/* Map container — CSS controls size, always in DOM */}
-          <div className={`relative transition-all duration-300 ease-in-out overflow-hidden ${
-            isWirtschaftlichkeit
-              ? "absolute bottom-0 left-0 w-48 h-32 z-20 rounded-tr-lg border-t border-r border-white/20"
-              : "flex-1 lg:w-[60%] min-h-[300px] lg:min-h-0"
-          }`}>
-            {mapPanel}
-            {isWirtschaftlichkeit && (
-              <div
-                className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-[500] cursor-pointer"
-                onClick={() => setActiveTab("katalog")}
-              >
-                <span className="text-xs text-white font-semibold">🗺️ Zur Karte</span>
-              </div>
-            )}
-            {!isWirtschaftlichkeit && placeMode && (
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#0D9488] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-[#0D9488]/30 animate-pulse">
-                Klicke auf die Karte um das Gebäude zu platzieren · R = Drehen · ESC = Abbrechen
-              </div>
-            )}
-          </div>
+          {/* Map container — full size in Katalog, hidden in Wirtschaftlichkeit (map is in sidebar there) */}
+          {!isWirtschaftlichkeit && (
+            <div className="relative flex-1 lg:w-[60%] min-h-[300px] lg:min-h-0 transition-all duration-300 ease-in-out overflow-hidden">
+              {mapPanel}
+              {placeMode && (
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#0D9488] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-[#0D9488]/30 animate-pulse">
+                  Klicke auf die Karte um das Gebäude zu platzieren · R = Drehen · ESC = Abbrechen
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Content panel */}
           {isWirtschaftlichkeit ? (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Scrollable: all sections except KPIs */}
-              <div className="flex-1 min-h-0 overflow-y-auto bg-[#1E293B] p-4">
-                <CostCalculator
-                  baufelder={baufelder}
-                  placedUnits={placedUnits}
-                  buildings={buildings}
-                  filters={filters}
-                  onCalcUpdate={setCostData}
-                  matchScore={costCalculatorMatchScore}
-                  fullWidth={true}
-                  hideKpi={true}
-                />
-              </div>
-              {/* Sticky KPI Dashboard at bottom */}
-              {costData && (
-                <div className="shrink-0 bg-[#1E293B] border-t border-white/10 p-4 max-h-[35vh] overflow-y-auto">
-                  <KpiDashboard costData={costData} fullWidth={true} />
+            <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+              {/* Left Sidebar: Map + Building List (desktop) */}
+              <div className="hidden lg:flex w-80 flex-shrink-0 flex-col border-r border-white/10 bg-[#1a1a2e]">
+                {/* Map - larger */}
+                <div className="h-72 flex-shrink-0 border-b border-white/10">
+                  {mapPanel}
                 </div>
-              )}
+                {/* Building List - scrollable */}
+                <div className="flex-1 overflow-y-auto p-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
+                  <BuildingList
+                    placedUnits={placedUnits}
+                    buildings={buildings}
+                    baufelder={baufelder}
+                    selectedId={selectedUnit}
+                    onSelect={setSelectedUnit}
+                    onViewSteckbrief={setSteckbriefUnit}
+                  />
+                </div>
+              </div>
+              {/* Mobile: Map strip + horizontal cards */}
+              <div className="lg:hidden flex flex-col">
+                <div className="h-36 flex-shrink-0 border-b border-white/10">
+                  {mapPanel}
+                </div>
+                {placedUnits.length > 0 && (
+                  <div className="flex overflow-x-auto gap-2 p-2 bg-[#1a1a2e] border-b border-white/10 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-white/10">
+                    {placedUnits.map((unit, i) => {
+                      const building = buildings.find(b => b.id === unit.buildingId);
+                      if (!building) return null;
+                      const mfr = building.manufacturer;
+                      return (
+                        <button
+                          key={unit.id}
+                          onClick={() => setSelectedUnit(unit.id)}
+                          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
+                            selectedUnit === unit.id
+                              ? "border-teal-500/60 bg-teal-500/10 text-teal-400"
+                              : "border-white/10 bg-white/5 text-white/60"
+                          }`}
+                        >
+                          🏢 {i + 1} · {building.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              {/* Right: CostCalculator + KPI */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 min-h-0 overflow-y-auto bg-[#1E293B] p-4">
+                  <CostCalculator
+                    baufelder={baufelder}
+                    placedUnits={placedUnits}
+                    buildings={buildings}
+                    filters={filters}
+                    onCalcUpdate={setCostData}
+                    matchScore={costCalculatorMatchScore}
+                    fullWidth={true}
+                    hideKpi={true}
+                  />
+                </div>
+                {costData && (
+                  <div className="shrink-0 bg-[#1E293B] border-t border-white/10 p-4 max-h-[35vh] overflow-y-auto">
+                    <KpiDashboard costData={costData} fullWidth={true} />
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="lg:w-[40%] flex flex-col min-h-0 border-l border-white/10">
