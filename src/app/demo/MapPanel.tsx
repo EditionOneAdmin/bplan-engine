@@ -24,6 +24,7 @@ import type { RegionConfig } from "../../config/regionTypes";
 import { RegionSelector } from "./RegionSelector";
 import { getMietspiegel } from "../../data/mietspiegel";
 import { findDemographicProfile } from "./demographicData";
+import { lookupByCoordinate, type GeoIndexResult } from "../../lib/geoindex-api";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -276,7 +277,11 @@ function ClickFeatureInfo({ enabled, region }: { enabled: boolean; region: Regio
         promises.push(Promise.resolve(null));
       }
 
+      // GeoIndex Supabase lookup (runs in parallel)
+      const geoIndexPromise = lookupByCoordinate(lat, lng).catch(() => null);
+
       const [flurData, wohnlageHtml, borisHtml] = await Promise.all(promises);
+      const geoIndexData: GeoIndexResult | null = await geoIndexPromise;
 
       // --- Render Flurstück ---
       if (flurData) {
@@ -490,6 +495,37 @@ function ClickFeatureInfo({ enabled, region }: { enabled: boolean; region: Regio
           <div style="margin-top:4px;font-weight:600;">Ø Durchschnitt: ${mietspiegelEntry.durchschnitt.toFixed(2).replace(".",",")} €/m²</div>
           <div style="margin-top:4px;font-size:10px;color:#64748b;">⚠️ Orientierungswerte – kein Rechtsanspruch. Quelle: ${mietspiegelEntry.quelle}</div>
         </div>`;
+      }
+
+      // --- GeoIndex (Supabase) Data ---
+      if (geoIndexData && !geoIndexData.error) {
+        const gi = geoIndexData;
+        const hasAny = gi.flurstueck || gi.bplan || gi.boris || gi.mietspiegel || gi.lbo;
+        if (hasAny) {
+          content += `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;">
+            <div style="font-weight:600;margin-bottom:4px;color:#60A5FA;">🗄️ GeoIndex (DB)</div>`;
+
+          if (gi.flurstueck) {
+            const f = gi.flurstueck;
+            content += `<div><span style="color:#94a3b8;">Flurstück:</span> ${f.gemarkung}/${f.flur}-${f.zaehler}${f.nenner ? '/' + f.nenner : ''}</div>`;
+            if (f.flaeche_m2) content += `<div><span style="color:#94a3b8;">Fläche:</span> ${Math.round(f.flaeche_m2).toLocaleString("de-DE")} m²</div>`;
+          }
+          if (gi.bplan) {
+            content += `<div><span style="color:#94a3b8;">B-Plan:</span> ${gi.bplan.name}${gi.bplan.status ? ' (' + gi.bplan.status + ')' : ''}</div>`;
+          }
+          if (gi.boris) {
+            content += `<div><span style="color:#94a3b8;">Bodenrichtwert:</span> <strong style="color:#FBBF24;">${gi.boris.bodenrichtwert.toLocaleString("de-DE")} €/m²</strong>${gi.boris.distance_m ? ' (≈' + gi.boris.distance_m + 'm entfernt)' : ''}</div>`;
+          }
+          if (gi.mietspiegel) {
+            const m = gi.mietspiegel;
+            content += `<div><span style="color:#94a3b8;">Miete:</span> ${m.miete_min?.toFixed(2) || '?'}–${m.miete_max?.toFixed(2) || '?'} €/m² (${m.wohnlage || '?'})</div>`;
+          }
+          if (gi.lbo) {
+            content += `<div><span style="color:#94a3b8;">LBO:</span> ${gi.lbo.land} · Abstand ${gi.lbo.abstandsflaechen_faktor}H (min ${gi.lbo.abstandsflaechen_minimum}m)</div>`;
+          }
+          content += `<div style="font-size:10px;color:#475569;margin-top:2px;">Quelle: ${gi.source === 'rpc' ? 'PostGIS' : 'Fallback'}</div>`;
+          content += `</div>`;
+        }
       }
 
       content += `</div>`;
