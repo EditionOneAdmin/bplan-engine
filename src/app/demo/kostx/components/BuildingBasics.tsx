@@ -30,16 +30,26 @@ export default function BuildingBasics({ config, onChange }: Props) {
 
       <ParameterSlider label="Länge Gebäude" value={config.laenge_m} min={5} max={200} step={1} unit="m" showInput onChange={(v) => onChange({ laenge_m: v })} />
       <ParameterSlider label="Breite Gebäude" value={config.breite_m} min={5} max={50} step={0.5} unit="m" showInput onChange={(v) => onChange({ breite_m: v })} />
-      <ParameterSlider label="Geschosse" value={config.geschosse} min={1} max={30} step={1} unit="" showInput onChange={(v) => onChange({ geschosse: v })} />
+      <ParameterSlider label="Geschosse" value={config.geschosse} min={1} max={8} step={1} unit="" showInput onChange={(v) => {
+        const patch: Partial<KostXConfig> = { geschosse: v };
+        // Ab 7 Geschosse: Mauerwerk nicht mehr möglich → Auto-Switch
+        if (v >= 7 && config.bauweise === 'Mauerwerk') {
+          patch.bauweise = 'Stahlbeton';
+        }
+        onChange(patch);
+      }} />
       <ParameterSlider label="Lichte Raumhöhe" value={config.raumhoehe_m} min={2.3} max={4.0} step={0.1} unit="m" formatValue={(v) => v.toFixed(1)} onChange={(v) => onChange({ raumhoehe_m: v })} />
 
       <ParameterSelect
         label="Bauweise"
         value={config.bauweise}
-        options={[
-          { value: 'Mauerwerk', label: 'Mauerwerk' },
-          { value: 'Stahlbeton', label: 'Stahlbeton' },
-        ]}
+        options={config.geschosse >= 7
+          ? [{ value: 'Stahlbeton', label: 'Stahlbeton' }]
+          : [
+              { value: 'Mauerwerk', label: 'Mauerwerk' },
+              { value: 'Stahlbeton', label: 'Stahlbeton' },
+            ]
+        }
         onChange={(v) => onChange({ bauweise: v as KostXConfig['bauweise'] })}
       />
 
@@ -53,6 +63,10 @@ export default function BuildingBasics({ config, onChange }: Props) {
         ]}
         onChange={(v) => onChange({ untergeschoss: v as KostXConfig['untergeschoss'] })}
       />
+
+      {config.untergeschoss === 'Keller' && (
+        <ParameterSlider label="Unterkellerungsgrad" value={config.unterkellerungsanteil * 100} min={10} max={100} step={5} unit="%" formatValue={(v) => v.toFixed(0)} onChange={(v) => onChange({ unterkellerungsanteil: v / 100 })} />
+      )}
     </div>
   );
 }

@@ -53,27 +53,42 @@ function parseArgs() {
 // WFS fetcher
 // ---------------------------------------------------------------------------
 
-function buildUrl(startIndex: number, gemeinde?: string): string {
-  const params = new URLSearchParams({
-    SERVICE: "WFS",
-    VERSION: "2.0.0",
-    REQUEST: "GetFeature",
-    TYPENAMES: FEATURE_TYPE,
-    COUNT: String(PAGE_SIZE),
-    STARTINDEX: String(startIndex),
-    SRSNAME: "EPSG:4326",
-  });
-
-  // Optional spatial/attribute filter for a single Gemeinde
-  if (gemeinde) {
-    // CQL filter on gmdschl (8-digit Gemeindeschlüssel)
-    params.set(
-      "CQL_FILTER",
-      `gmdschl='${gemeinde}'`
-    );
+/**
+ * Build WFS request. Without filter → simple GET.
+ * With gemeinde filter → POST XML body (NRW WFS requires POST + ave: namespace for filters).
+ */
+function buildRequest(startIndex: number, gemeinde?: string): { url: string; method: string; body?: string; headers?: Record<string, string> } {
+  if (!gemeinde) {
+    const params = new URLSearchParams({
+      SERVICE: "WFS",
+      VERSION: "2.0.0",
+      REQUEST: "GetFeature",
+      TYPENAMES: FEATURE_TYPE,
+      COUNT: String(PAGE_SIZE),
+      STARTINDEX: String(startIndex),
+      SRSNAME: "EPSG:4326",
+    });
+    return { url: `${WFS_BASE}?${params.toString()}`, method: "GET" };
   }
 
-  return `${WFS_BASE}?${params.toString()}`;
+  // POST with XML body for filtered requests
+  const xmlBody = `<wfs:GetFeature xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:ave="http://repository.gdi-de.org/schemas/adv/produkt/alkis-vereinfacht/2.0" service="WFS" version="2.0.0" count="${PAGE_SIZE}" startIndex="${startIndex}">
+  <wfs:Query typeNames="ave:Flurstueck" srsName="EPSG:4326">
+    <fes:Filter>
+      <fes:PropertyIsEqualTo>
+        <fes:ValueReference>ave:gmdschl</fes:ValueReference>
+        <fes:Literal>${gemeinde}</fes:Literal>
+      </fes:PropertyIsEqualTo>
+    </fes:Filter>
+  </wfs:Query>
+</wfs:GetFeature>`;
+
+  return {
+    url: WFS_BASE,
+    method: "POST",
+    body: xmlBody,
+    headers: { "Content-Type": "application/xml" },
+  };
 }
 
 interface FlurstueckRaw {
@@ -198,10 +213,14 @@ async function main() {
   let totalFetched = 0;
 
   while (totalFetched < limit) {
-    const url = buildUrl(startIndex, gemeinde);
+    const req = buildRequest(startIndex, gemeinde);
     console.log(`📥 Fetching startIndex=${startIndex} ...`);
 
-    const res = await fetch(url);
+    const res = await fetch(req.url, {
+      method: req.method,
+      body: req.body,
+      headers: req.headers,
+    });
     if (!res.ok) {
       console.error(`❌ HTTP ${res.status}: ${await res.text()}`);
       break;
@@ -280,7 +299,7 @@ async function main() {
     if (supabase && rows.length > 0) {
       const { error } = await supabase
         .from(TABLE)
-        .insert(rows);
+        .upsert(rows, { onConflict: "gemeinde,gemarkung,flur,zaehler,nenner" });
 
       if (error) {
         console.error("❌ Supabase upsert error:", error.message);
