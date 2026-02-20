@@ -90,7 +90,7 @@ export default function KostenaufstellungView({ result }: Props) {
               <thead>
                 <tr className="text-white/40 border-b border-white/10">
                   <th className="text-left py-1.5 px-1 font-medium">Position</th>
-                  <th className="text-right py-1.5 px-1 font-medium">€/m² NUF</th>
+                  <th className="text-right py-1.5 px-1 font-medium">€/m² WF (brutto)</th>
                   <th className="text-left py-1.5 px-1 font-medium w-16">Typ</th>
                   <th className="text-left py-1.5 px-1 font-medium w-24">Anteil</th>
                 </tr>

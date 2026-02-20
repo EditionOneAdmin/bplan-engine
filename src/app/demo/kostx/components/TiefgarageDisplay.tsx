@@ -116,7 +116,7 @@ export default function TiefgarageDisplay({ result }: Props) {
               </tr>
               {nuf > 0 && (
                 <tr className="text-white/50">
-                  <td colSpan={5} className="py-1 px-1">€/m² NUF brutto</td>
+                  <td colSpan={5} className="py-1 px-1">€/m² WF (brutto) brutto</td>
                   <td className="text-right py-1 px-1">{fmtDec(tgResult.total_eurBrutto / nuf)} €/m²</td>
                 </tr>
               )}

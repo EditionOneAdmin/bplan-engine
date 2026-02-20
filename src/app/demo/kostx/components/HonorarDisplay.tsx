@@ -45,7 +45,7 @@ export default function HonorarDisplay({ result }: Props) {
                 <th className="text-right py-1.5 px-1 font-medium">Anr. Kosten</th>
                 <th className="text-right py-1.5 px-1 font-medium">LP-Summe</th>
                 <th className="text-right py-1.5 px-1 font-medium">Honorar brutto</th>
-                <th className="text-right py-1.5 px-1 font-medium">€/m² NUF</th>
+                <th className="text-right py-1.5 px-1 font-medium">€/m² WF (brutto)</th>
               </tr>
             </thead>
             <tbody>

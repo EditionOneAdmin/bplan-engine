@@ -40,13 +40,15 @@ function parseArgs() {
   let gemeinde: string | undefined;
   let limit = Infinity;
   let dryRun = false;
+  let startAt = 0;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--gemeinde" && args[i + 1]) gemeinde = args[++i];
     if (args[i] === "--limit" && args[i + 1]) limit = Number(args[++i]);
+    if (args[i] === "--start-index" && args[i + 1]) startAt = Number(args[++i]);
     if (args[i] === "--dry-run") dryRun = true;
   }
-  return { gemeinde, limit, dryRun };
+  return { gemeinde, limit, dryRun, startAt };
 }
 
 // ---------------------------------------------------------------------------
@@ -184,7 +186,7 @@ function centroid(geojson: GeoJSON.Geometry): [number, number] | null {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const { gemeinde, limit, dryRun } = parseArgs();
+  const { gemeinde, limit, dryRun, startAt } = parseArgs();
 
   console.log("🌍 NRW ALKIS Flurstücke Harvester");
   console.log(`   WFS:      ${WFS_BASE}`);
@@ -209,7 +211,7 @@ async function main() {
     supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
   }
 
-  let startIndex = 0;
+  let startIndex = startAt;
   let totalFetched = 0;
 
   while (totalFetched < limit) {

@@ -27,7 +27,7 @@ export default function WaterfallChart({ result }: Props) {
 
   return (
     <div className="p-4">
-      <h3 className="text-sm font-semibold text-white/90 mb-3">Kostenaufbau (€/m² NUF)</h3>
+      <h3 className="text-sm font-semibold text-white/90 mb-3">Kostenaufbau (€/m² WF brutto)</h3>
       <div className="overflow-x-auto">
         <svg width={Math.max(totalW, 300)} height={chartH + 50} className="text-white">
           {items.map((item, i) => {
