@@ -27,9 +27,9 @@ export default function FacadeConfig({ config, onChange }: Props) {
       ]} onChange={(v) => onChange({ fassadengestaltung: v as KostXConfig['fassadengestaltung'] })} />
       <ParameterSlider label="Anteil WE mit Balkon" value={config.balkoneAnteil * 100} min={0} max={100} step={5} unit="%" formatValue={(v) => v.toFixed(0)} onChange={(v) => onChange({ balkoneAnteil: v / 100 })} />
       <ParameterSelect label="Balkontyp" value={config.balkontyp} options={[
-        { value: 'vorgestellte Balkone', label: 'Vorgestellt' },
-        { value: 'hängende Balkone', label: 'Hängend' },
-        { value: 'Loggien', label: 'Loggia' },
+        { value: 'vorgestellte Balkone', label: 'Vorgestellte Balkone' },
+        { value: 'hängende Balkone', label: 'Hängende Balkone' },
+        { value: 'Loggien', label: 'Loggien' },
       ]} onChange={(v) => onChange({ balkontyp: v as KostXConfig['balkontyp'] })} />
       <ParameterSlider label="Balkongröße" value={config.balkongroesse_m2} min={3} max={20} step={0.5} unit="m²" onChange={(v) => onChange({ balkongroesse_m2: v })} />
     </div>
