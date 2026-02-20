@@ -21,7 +21,7 @@ export default function CostFactors({ config, onChange }: Props) {
   return (
     <div className="p-3">
       <ParameterSelect label="Baubeginn" value={config.baubeginn} options={QUARTERS} onChange={(v) => onChange({ baubeginn: v })} />
-      <ParameterSlider label="BKI p.a." value={config.baukostenindexPa} min={0} max={8} step={0.1} unit="%" formatValue={(v) => v.toFixed(1)} onChange={(v) => onChange({ baukostenindexPa: v })} info="Jährliche Baupreissteigerung in %. Aktueller Baukostenindex: ~3%. Konservativ: 1.5%" />
+      <ParameterSlider label="BKI p.a." value={config.baukostenindexPa} min={0} max={8} step={0.1} unit="%" formatValue={(v) => v.toFixed(1)} onChange={(v) => onChange({ baukostenindexPa: v })} info="Prognose Baupreissteigerung in %. Aktueller Baukostenindex: ~3%. Je höher der Wert, desto konservativer die Kalkulation." />
       <ParameterSlider label="Regionalfaktor" value={config.regionalfaktor} min={0.5} max={2.0} step={0.05} formatValue={(v) => v.toFixed(2)} onChange={(v) => onChange({ regionalfaktor: v })} />
       <ParameterSlider label="GU-Zuschlag" value={config.guZuschlag * 100} min={0} max={30} step={1} unit="%" formatValue={(v) => v.toFixed(0)} onChange={(v) => onChange({ guZuschlag: v / 100 })} info="Generalunternehmer-Zuschlag auf die Baukosten." />
       <ParameterSelect
